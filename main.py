@@ -9,31 +9,41 @@ db_file = ".sdb"
 if not os.path.isfile(db_file):
     with open(db_file, "wb") as f:
         pickle.dump({"default": "default"}, f)
-    f.close()
 
 app = FastAPI()
 
-@app.put("/db")
-async def put(key: str, value: str):
-    db = None
+
+def read_sdb():
     with open(db_file, "rb") as f:
-        db = pickle.load(f)
-        db[key] = value
-    f.close()
+        return pickle.load(f)
+
+
+def dump_sdb(db):
     with open(db_file, "wb+") as f:
         pickle.dump(db, f)
-    f.close()
+
+
+@app.put("/db")
+async def put(key: str, value: str):
+    db = read_sdb()
+    db[key] = value
+    dump_sdb(db)
+
     return value
+
 
 @app.get("/db")
 async def get(key: str):
-    db = None
-    with open(db_file, "rb") as f:
-        db = pickle.load(f)
-    f.close()
+    db = read_sdb()
+
     if db is None:
-        raise HTTPException(status_code=404, detail=f"Database file {db_file} could not be opened and loaded")
-    val = db.get(key, None)
+        raise HTTPException(
+            status_code=404,
+            detail=f"Database file {db_file} could not be opened and loaded",
+        )
+
+    val = db.get(key)
     if val is None:
-        raise HTTPException(status_code=404, detail=f"No value set for key {key}")
+        raise HTTPException(status_code=404, detail=f"No value set for key {key},")
+
     return val
