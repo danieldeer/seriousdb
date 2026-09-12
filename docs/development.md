@@ -19,6 +19,12 @@ uv run fastapi dev main.py
 
 The server is available at `http://127.0.0.1:8000` and its interactive API documentation is at `/docs`.
 
+## Tests
+
+```bash
+uv run pytest
+```
+
 ## Formatting
 
 Format Python files with Black:
