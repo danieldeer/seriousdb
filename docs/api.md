@@ -45,3 +45,22 @@ Alice
 ```
 
 If the requested key does not exist, the API returns a `404` response.
+
+### DELETE `/db`
+
+Removes the key and value from the database. Then returns the value associated with the key.
+
+For example:
+
+```text
+key: name
+```
+
+returns:
+
+```text
+Alice
+```
+
+If the requested key does not exist, the API returns a `404` response.
+
