@@ -1,39 +1,53 @@
-import pickle
 import os
+import pickle
+import threading
+
 from fastapi import FastAPI
 from fastapi import HTTPException
 
 db_file = ".sdb"
+db_lock = threading.Lock()
 
-# Check if the database file exists, if not populate it
-if not os.path.isfile(db_file):
+DEFAULT_DB = {"default": "default"}
+
+
+def load_db():
+    try:
+        with open(db_file, "rb") as f:
+            return pickle.load(f)
+
+    except (EOFError, pickle.UnpicklingError, FileNotFoundError):
+        db = dict(DEFAULT_DB)
+        save_db(db)
+        return db
+
+
+def save_db(db):
     with open(db_file, "wb") as f:
-        pickle.dump({"default": "default"}, f)
-    f.close()
+        pickle.dump(db, f)
+
+
+# Load the database once into memory at startup
+db = load_db()
 
 app = FastAPI()
 
+
 @app.put("/db")
 async def put(key: str, value: str):
-    db = None
-    with open(db_file, "rb") as f:
-        db = pickle.load(f)
+    with db_lock:
         db[key] = value
-    f.close()
-    with open(db_file, "wb+") as f:
-        pickle.dump(db, f)
-    f.close()
+        save_db(db)
+
     return value
+
 
 @app.get("/db")
 async def get(key: str):
-    db = None
-    with open(db_file, "rb") as f:
-        db = pickle.load(f)
-    f.close()
-    if db is None:
-        raise HTTPException(status_code=404, detail=f"Database file {db_file} could not be opened and loaded")
-    val = db.get(key, None)
+    with db_lock:
+        val = db.get(key, None)
+
     if val is None:
         raise HTTPException(status_code=404, detail=f"No value set for key {key}")
+
     return val
