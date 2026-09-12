@@ -107,6 +107,22 @@ returns:
 Alice
 ```
 
+### DELETE `/db`
+
+Deletes a key-value pair.
+
+Parameters:
+
+- `key` - The key to delete.
+
+For example:
+
+```text
+key: name
+```
+
+If the key exists, the endpoint deletes it and returns its previous value.
+
 If the requested key does not exist, the API returns a `404` response.
 
 ## Persistence
