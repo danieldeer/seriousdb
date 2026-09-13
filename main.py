@@ -13,6 +13,24 @@ if not os.path.isfile(db_file):
 
 app = FastAPI()
 
+@app.delete("/db")
+async def delete(key: str):
+    with open(db_file, "rb") as f:
+        db = json.load(f)
+    if key not in db:
+        raise HTTPException(
+            status_code=404,
+            detail=f"No value set for key {key}",
+        )
+    deleted_value = db.pop(key)
+    with open(db_file, "w") as f:
+        json.dump(db, f)
+    return {
+        "key": key,
+        "deleted_value": deleted_value,
+    }
+
+
 
 @app.put("/db")
 async def put(key: str, value: str):
