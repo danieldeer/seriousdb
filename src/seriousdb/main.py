@@ -1,4 +1,5 @@
 from contextlib import asynccontextmanager
+from typing import Annotated
 
 from fastapi import Depends, FastAPI, HTTPException
 
@@ -30,7 +31,8 @@ async def put(key: str, value: str, cache: Cache = Depends(get_cache)):
 
 
 @app.get("/db")
-async def get(key: str, cache: Cache = Depends(get_cache)):
-    if value := select(key, cache) is None:
+async def get(key: str, cache: Annotated[Cache, Depends(get_cache)]):
+    value = select(key, cache)
+    if value is None:
         raise HTTPException(status_code=404, detail=f"No value set for key {key}")
     return value
