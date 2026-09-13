@@ -3,7 +3,7 @@ from fastapi import HTTPException
 from .cache import Cache
 
 
-def insert(key: str, value: str, cache: Cache):
+def insert(key: str, value: str, cache: Cache) -> str:
     with cache.lock:
         if cache.db is None:
             raise HTTPException(
@@ -14,7 +14,7 @@ def insert(key: str, value: str, cache: Cache):
     return value
 
 
-def select(key: str, cache: Cache):
+def select(key: str, cache: Cache) -> str:
     with cache.lock:
         if cache.db is None:
             raise HTTPException(

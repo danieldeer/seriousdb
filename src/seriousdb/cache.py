@@ -17,7 +17,7 @@ class Cache:
         self.lock = Lock()
 
 
-def _write_default(filename: str) -> dict:
+def _write_default(filename: str) -> dict[str, str]:
     with open(filename, "wb") as f:
         f.write(json.dumps(DEFAULT_DB).encode())
     return dict(DEFAULT_DB)
