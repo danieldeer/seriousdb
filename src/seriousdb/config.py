@@ -1,1 +1,1 @@
-DB_FILE = ".sdb"
+DB_FILE: str = ".sdb"

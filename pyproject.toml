@@ -4,15 +4,10 @@ version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.11"
-dependencies = [
-    "fastapi[standard]>=0.141.1",
-]
+dependencies = ["fastapi[standard]>=0.141.1"]
 
 [dependency-groups]
-dev = [
-    "ruff>=0.16.7",
-    "ty>=0.0.80",
-]
+dev = ["ruff>=0.16.7", "ty>=0.0.80", "pre-commit"]
 
 [build-system]
 requires = ["setuptools>=61.0"]

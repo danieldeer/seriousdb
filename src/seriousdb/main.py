@@ -2,11 +2,10 @@ from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from typing import Annotated
 
-from fastapi import Depends, FastAPI
+from fastapi import BackgroundTasks, Depends, FastAPI
 
-from .cache import Cache, flush, load
+from .cache import Cache
 from .config import DB_FILE
-from .db import insert, select
 
 cache = Cache()
 
@@ -14,7 +13,7 @@ cache = Cache()
 @asynccontextmanager
 async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
     """Load the on-disk cache into memory for the lifetime of the app."""
-    load(DB_FILE, cache)
+    cache.load(DB_FILE)
     yield
 
 
@@ -30,14 +29,20 @@ CacheDep = Annotated[Cache, Depends(get_cache)]
 
 
 @app.put("/db")
-async def put(key: str, value: str, cache: CacheDep) -> str:
+async def put(key: str, value: str, background_tasks: BackgroundTasks, cache: CacheDep) -> str:
     """Store `value` under `key` and persist the cache to disk."""
-    insert(key, value, cache)
-    flush(cache)
+    cache.insert(key, value)
+    background_tasks.add_task(cache.flush)
     return value
 
 
 @app.get("/db")
 async def get(key: str, cache: CacheDep) -> str:
     """Return the value stored under `key`."""
-    return select(key, cache)
+    return cache.select(key)
+
+
+@app.delete("/db")
+async def delete(key: str, cache: CacheDep) -> str:
+    """Remove and return the value stored under `key`."""
+    return cache.delete(key)
