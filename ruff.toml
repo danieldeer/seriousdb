@@ -1,2 +1,34 @@
+line-length = 120
+
+[lint]
+select = ["ALL"]
+ignore = [
+    "D100",    # undocumented-public-module
+    "D104",    # undocumented-public-package
+    "G004",    # logging-f-string
+    "PLR0913", # too-many-arguments
+    "UP017",   # datetime-timezone-undocumented
+    "COM812",  # disable trailing whitespace because we use formatter
+    "S101",    # allow assert statements
+    "RET504",  # allow assignment before return
+    "UP045",   # allow typing.Optional[X] instead of forcing X | None syntax
+    "PLW",     # disable the whole Pylint "warning" rule category
+    "D102",    # allow undocumented public methods
+    "N806",    # allow non-lowercase local variable names in functions (e.g. matrices, physics variables)
+    "N803",    # allow non-snake_case argument names
+    "SLF001",  # allow accessing "private" (underscore-prefixed) attributes
+    "C901",    # disable the cyclomatic-complexity check on functions
+    "PLR0912", # allow functions with many branches
+    "PLR0915", # allow functions with many statements
+    "PLR2004", # allow comparisons against unnamed "magic" numbers
+    "D105",    # allow undocumented magic methods (e.g. __init__, __eq__)
+    "N802",    # allow non-snake_case function names
+    "N999",    # allow module names that don't follow snake_case
+    "PLR0917", # allow functions with many positional arguments
+    "CPY001",  # don't require a copyright notice header in every file
+    "UP046",   # allow Generic[T] classes instead of forcing PEP 695 `class Foo[T]:` syntax
+    "UP040",   # allow plain type aliases instead of forcing the PEP 695 `type` statement
+    "UP047",   # allow TypeVar-based generic functions instead of forcing PEP 695 `def foo[T]():` syntax
+]
 [lint.flake8-bugbear]
 extend-immutable-calls = ["fastapi.Depends"]

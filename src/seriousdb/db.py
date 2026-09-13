@@ -3,7 +3,8 @@ from fastapi import HTTPException
 from .cache import Cache
 
 
-def insert(key: str, value: str, cache: Cache):
+def insert(key: str, value: str, cache: Cache) -> str:
+    """Insert `value` under `key` in `cache`'s database and return it."""
     with cache.lock:
         if cache.db is None:
             raise HTTPException(
@@ -14,7 +15,8 @@ def insert(key: str, value: str, cache: Cache):
     return value
 
 
-def select(key: str, cache: Cache):
+def select(key: str, cache: Cache) -> str:
+    """Return the value stored under `key` in `cache`'s database."""
     with cache.lock:
         if cache.db is None:
             raise HTTPException(
