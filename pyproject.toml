@@ -10,7 +10,7 @@ dependencies = [
 ]
 
 [project.scripts]
-seriousdb = "run:main"
+seriousdb = "seriousdb:main"
 
 [dependency-groups]
 dev = [

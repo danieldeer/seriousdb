@@ -2,28 +2,29 @@ import json
 import logging
 import os
 import time
+import typing
 from threading import Lock
 
 
 logger = logging.getLogger(__name__)
 
-DEFAULT_DB = {"default": "default"}
+DEFAULT_DB: dict[str, str] = {"default": "default"}
 
 
 class Cache:
     def __init__(self):
-        self.filename = None
-        self.db = None
-        self.lock = Lock()
+        self.filename: str | None = None
+        self.db: dict[str, str] | None = None
+        self.lock: Lock = Lock()
 
 
-def _write_default(filename: str) -> dict:
+def _write_default(filename: str) -> dict[str, typing.Any]:
     with open(filename, "wb") as f:
         f.write(json.dumps(DEFAULT_DB).encode())
     return dict(DEFAULT_DB)
 
 
-def load(filename: str, cache: Cache):
+def load(filename: str, cache: Cache) -> None:
     with cache.lock:
         if not os.path.isfile(filename):
             cache.db = _write_default(filename)
