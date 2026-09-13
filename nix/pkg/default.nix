@@ -19,6 +19,7 @@
 		};
 
 		packages.default = config.packages.seriousdb;
+
 		packages.seriousdb = pkgs.python314Packages.buildPythonApplication {
 			pname = "seriousdb";
 			version = "0.1.0";

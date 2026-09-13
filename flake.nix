@@ -15,6 +15,7 @@
 		imports = [
 			inputs.git-hooks-nix.flakeModule
 
+			./nix/check/sanity.nix
 			./nix/dev
 			./nix/pkg
 		];
