@@ -4,7 +4,6 @@ import os
 import time
 from threading import Lock
 
-
 logger = logging.getLogger(__name__)
 
 DEFAULT_DB = {"default": "default"}
@@ -12,8 +11,8 @@ DEFAULT_DB = {"default": "default"}
 
 class Cache:
     def __init__(self):
-        self.filename = None
-        self.db = None
+        self.filename: str | None = None
+        self.db: dict | None = None
         self.lock = Lock()
 
 
@@ -36,7 +35,9 @@ def load(filename: str, cache: Cache):
                 os.replace(filename, backup)
                 logger.warning(
                     "Corrupt database file %s (%s); moved to %s and starting fresh",
-                    filename, e, backup,
+                    filename,
+                    e,
+                    backup,
                 )
                 cache.db = _write_default(filename)
         cache.filename = filename
@@ -44,7 +45,7 @@ def load(filename: str, cache: Cache):
 
 def flush(cache: Cache):
     with cache.lock:
-        if cache.db is None:
+        if cache.db is None or cache.filename is None:
             return
         with open(cache.filename, "wb+") as f:
             f.write(json.dumps(cache.db).encode())
