@@ -1,8 +1,12 @@
 import json
 import os
+from typing import Annotated
+
+from fastapi import Body
 from fastapi import FastAPI
 from fastapi import HTTPException
 from threading import Lock
+
 
 class Cache:
     def __init__(self):
@@ -12,17 +16,23 @@ class Cache:
 
 
 def insert(key: str, value: str, cache: Cache):
-    with cache.lock:  
+    with cache.lock:
         if cache.db is None:
-            raise HTTPException(status_code=404, detail=f"Database file {cache.filename} could not be opened and loaded")
+            raise HTTPException(
+                status_code=404,
+                detail=f"Database file {cache.filename} could not be opened and loaded",
+            )
         cache.db[key] = value
     return value
 
 
 def select(key: str, cache: Cache):
-    with cache.lock: 
+    with cache.lock:
         if cache.db is None:
-            raise HTTPException(status_code=404, detail=f"Database file {cache.filename} could not be opened and loaded")
+            raise HTTPException(
+                status_code=404,
+                detail=f"Database file {cache.filename} could not be opened and loaded",
+            )
         val = cache.db.get(key, None)
     if val is None:
         raise HTTPException(status_code=404, detail=f"No value set for key {key}")
@@ -30,7 +40,7 @@ def select(key: str, cache: Cache):
 
 
 def load(filename: str, cache: Cache):
-    with cache.lock:  
+    with cache.lock:
         db_file = filename
         if not os.path.isfile(db_file):
             with open(db_file, "wb") as f:
@@ -46,7 +56,7 @@ def load(filename: str, cache: Cache):
 
 
 def flush(cache: Cache):
-    with cache.lock:  
+    with cache.lock:
         if cache.db is None:
             return
         with open(cache.filename, "wb+") as f:
@@ -62,7 +72,7 @@ app = FastAPI()
 
 
 @app.put("/db")
-async def put(key: str, value: str):
+async def put(key: str, value: Annotated[str, Body(embed=True)]):
     insert(key, value, cache)
     flush(cache)
     return value

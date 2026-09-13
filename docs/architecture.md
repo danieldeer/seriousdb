@@ -11,6 +11,7 @@ The service starts with a default entry when `.sdb` does not exist. There is no 
 ## Request flow
 
 1. FastAPI receives a request.
-2. The route loads the dictionary from `.sdb`.
-3. A `PUT` updates and rewrites the file; a `GET` reads the requested value.
-4. The route returns the value or a `404` error.
+2. A `PUT` reads the value from its JSON request body.
+3. The route accesses the in-memory dictionary.
+4. A `PUT` updates and rewrites the file; a `GET` reads the requested value.
+5. The route returns the value or a `404` error.
