@@ -4,7 +4,6 @@ import os
 import time
 from threading import Lock
 
-
 logger = logging.getLogger(__name__)
 
 DEFAULT_DB = {"default": "default"}
@@ -36,7 +35,9 @@ def load(filename: str, cache: Cache):
                 os.replace(filename, backup)
                 logger.warning(
                     "Corrupt database file %s (%s); moved to %s and starting fresh",
-                    filename, e, backup,
+                    filename,
+                    e,
+                    backup,
                 )
                 cache.db = _write_default(filename)
         cache.filename = filename

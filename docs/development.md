@@ -17,10 +17,27 @@ To sync development dependencies run following command:
 uv sync --group dev
 ```
 
+## Pre-commit
+
+Hooks are configured in `.pre-commit-config.yaml` and run `ruff check` and
+`ruff format` on staged files.
+
+Install with:
+
+```bash
+uv tool run pre-commit install
+```
+
+### Nix
+
+```bash
+pre-commit install
+```
+
 ## Run locally
 
 ```bash
-uv run run.py 
+uv run run.py
 ```
 
 ## Nix
