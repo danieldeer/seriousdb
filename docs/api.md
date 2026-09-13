@@ -45,3 +45,26 @@ Alice
 ```
 
 If the requested key does not exist, the API returns a `404` response.
+
+### DELETE `/db`
+
+Deletes a key-value pair from the database.
+
+Parameters:
+
+- `key` - The key to store.
+
+For example:
+
+```text
+key: name
+```
+
+This returns:
+
+```python
+{
+  "key": "name",
+  "deleted_value": "Alice"
+}
+```
