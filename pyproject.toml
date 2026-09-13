@@ -10,8 +10,13 @@ dependencies = [
 
 [dependency-groups]
 dev = [
+    "pytest>=8.0",
     "ruff>=0.16.7",
 ]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
 
 [build-system]
 requires = ["setuptools>=61.0"]
