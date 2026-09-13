@@ -216,3 +216,9 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# serious database files
+.sdb
+
+# just in case:
+.db
