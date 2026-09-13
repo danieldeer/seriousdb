@@ -1,44 +1,36 @@
-import json
-import os
 from fastapi import FastAPI
 from fastapi import HTTPException
+from contextlib import asynccontextmanager
+from .db_engine import Db_Engine
 
-db_file = ".sdb"
+#First we initiate our database
+db=Db_Engine()
 
-# Check if the database file exists, if not populate it
-if not os.path.isfile(db_file):
-    with open(db_file, "wb") as f:
-        json_dumps = json.dumps({"default": "default"}).encode()
-        f.write(json_dumps)
+#now we will create a bridge between the FastAPI server and our Db_Engine
+#FastAPI will run everything before 'yield' and pause there.It will keep the server running and handle GET,PUT requests.
+#When the server is about to shut down it will execute instructions below 'yield'
+@asynccontextmanager
+async def lifespan(app:FastAPI):
+    #first load the database file into memory
+    db.boot()
 
-app = FastAPI()
+    yield
+
+    #flush everything to disk before shutting down
+    db.compact()
+
+app = FastAPI(lifespan=lifespan)
 
 
 @app.put("/db")
-async def put(key: str, value: str):
-    db = None
-    with open(db_file, "rb") as f:
-        binary_text = f.readline()
-        json_text = binary_text.decode()
-        db = json.loads(json_text)
-        db[key] = value
-    with open(db_file, "wb+") as f:
-        json_dumps = json.dumps(db).encode()
-        f.write(json_dumps)
+def put(key: str, value: str):
+    db.put(key,value)
     return value
 
 
 @app.get("/db")
-async def get(key: str):
-    db = None
-    with open(db_file, "rb") as f:
-        db = json.load(f)
-    if db is None:
-        raise HTTPException(
-            status_code=503,
-            detail=f"Database file {db_file} could not be opened and loaded",
-        )
-    val = db.get(key, None)
+def get(key: str):
+    val=db.get(key)
     if val is None:
         raise HTTPException(status_code=404, detail=f"No value set for key {key}")
     return val
