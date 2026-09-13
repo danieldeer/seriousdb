@@ -4,6 +4,7 @@ from fastapi import FastAPI
 from fastapi import HTTPException
 from threading import Lock
 
+
 class Cache:
     def __init__(self):
         self.filename = None
@@ -12,17 +13,23 @@ class Cache:
 
 
 def insert(key: str, value: str, cache: Cache):
-    with cache.lock:  
+    with cache.lock:
         if cache.db is None:
-            raise HTTPException(status_code=404, detail=f"Database file {cache.filename} could not be opened and loaded")
+            raise HTTPException(
+                status_code=404,
+                detail=f"Database file {cache.filename} could not be opened and loaded",
+            )
         cache.db[key] = value
     return value
 
 
 def select(key: str, cache: Cache):
-    with cache.lock: 
+    with cache.lock:
         if cache.db is None:
-            raise HTTPException(status_code=404, detail=f"Database file {cache.filename} could not be opened and loaded")
+            raise HTTPException(
+                status_code=404,
+                detail=f"Database file {cache.filename} could not be opened and loaded",
+            )
         val = cache.db.get(key, None)
     if val is None:
         raise HTTPException(status_code=404, detail=f"No value set for key {key}")
@@ -30,7 +37,7 @@ def select(key: str, cache: Cache):
 
 
 def load(filename: str, cache: Cache):
-    with cache.lock:  
+    with cache.lock:
         db_file = filename
         if not os.path.isfile(db_file):
             with open(db_file, "wb") as f:
@@ -46,27 +53,33 @@ def load(filename: str, cache: Cache):
 
 
 def flush(cache: Cache):
-    with cache.lock:  
+    with cache.lock:
         if cache.db is None:
             return
         with open(cache.filename, "wb+") as f:
             json_dumps = json.dumps(cache.db).encode()
             f.write(json_dumps)
 
+
 def delete(key: str, cache: Cache):
     with cache.lock:
         if cache.db is None:
-            raise HTTPException(status_code=404, detail=f"Database file {cache.filename} could not be opened and loaded")
+            raise HTTPException(
+                status_code=404,
+                detail=f"Database file {cache.filename} could not be opened and loaded",
+            )
         if key not in cache.db:
             raise HTTPException(status_code=404, detail=f"No value set for key {key}")
         deleted_value = cache.db.pop(key)
     return deleted_value
+
 
 db_file = ".sdb"
 cache = Cache()
 load(db_file, cache)
 
 app = FastAPI()
+
 
 @app.delete("/db")
 async def delete_endpoint(key: str):
@@ -76,7 +89,6 @@ async def delete_endpoint(key: str):
         "key": key,
         "deleted_value": deleted_value,
     }
-
 
 
 @app.put("/db")
