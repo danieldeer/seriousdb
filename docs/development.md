@@ -37,7 +37,7 @@ docker run -p 8000:8000 seriousdb
 Format Python files with `ruff`:
 
 ```bash
-uv tool run ruff .
+uvx ruff format .
 ```
 
 ## Linting
@@ -45,11 +45,19 @@ uv tool run ruff .
 Lint python files with `ruff`:
 
 ```bash
-uv tool run ruff check .
+uvx ruff check .
 ```
 
 To fix linter errors and warning if possible run following command:
 
 ```bash
-uv tool run ruff check --fix .
+uvx ruff check --fix .
+```
+
+## Type checking
+
+Type check the project with `ty`:
+
+```bash
+uvx ty check
 ```

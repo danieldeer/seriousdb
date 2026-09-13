@@ -5,7 +5,7 @@ from threading import Lock
 
 class Cache:
     def __init__(self):
-        self.filename = None
+        self.filename: str | None = None
         self.db = None
         self.lock = Lock()
 
@@ -24,7 +24,7 @@ def load(filename: str, cache: Cache):
 
 def flush(cache: Cache):
     with cache.lock:
-        if cache.db is None:
+        if cache.db is None or cache.filename is None:
             return
         with open(cache.filename, "wb+") as f:
             f.write(json.dumps(cache.db).encode())
