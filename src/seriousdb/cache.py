@@ -20,7 +20,8 @@ class Cache:
 
 def _write_default(filename: str) -> dict[str, typing.Any]:
     with open(filename, "wb") as f:
-        f.write(json.dumps(DEFAULT_DB).encode())
+    	# Result of call expression is of type "int" and is not used; assign to variable "_" if this is intentional
+        _ = f.write(json.dumps(DEFAULT_DB).encode())
     return dict(DEFAULT_DB)
 
 
@@ -43,9 +44,10 @@ def load(filename: str, cache: Cache) -> None:
         cache.filename = filename
 
 
-def flush(cache: Cache):
+def flush(cache: Cache) -> None:
     with cache.lock:
-        if cache.db is None:
+        if cache.db is None or cache.filename is None:
             return
+
         with open(cache.filename, "wb+") as f:
-            f.write(json.dumps(cache.db).encode())
+            _ = f.write(json.dumps(cache.db).encode())
