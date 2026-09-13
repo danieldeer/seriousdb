@@ -14,7 +14,7 @@ uv sync
 ## Run locally
 
 ```bash
-uv run fastapi dev main.py
+uv run run.py 
 ```
 
 The server is available at `http://127.0.0.1:8000` and its interactive API documentation is at `/docs`.
