@@ -24,7 +24,7 @@ def get_cache() -> Cache:
 
 
 @app.put("/db")
-async def put(key: str, value: str, cache: Cache = Depends(get_cache)):
+async def put(key: str, value: str, cache: Annotated[Cache, Depends(get_cache)]):
     insert(key, value, cache)
     flush(cache)
     return value
