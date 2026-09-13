@@ -1,5 +1,5 @@
+import json
 import os
-import pickle
 import threading
 
 db_file = ".sdb"
@@ -9,19 +9,22 @@ DEFAULT_DB = {"default": "default"}
 
 
 def load_db():
-    try:
-        with open(db_file, "rb") as f:
-            return pickle.load(f)
-    except (EOFError, pickle.UnpicklingError, FileNotFoundError):
-        db = dict(DEFAULT_DB)
-        save_db(db)
-        return db
+    with db_lock:
+        try:
+            with open(db_file, "r", encoding="utf-8") as f:
+                return json.load(f)
+        except (EOFError, json.JSONDecodeError, FileNotFoundError):
+            db_data = dict(DEFAULT_DB)
+            with open(db_file, "w", encoding="utf-8") as f:
+                json.dump(db_data, f, indent=4)
+            return db_data
 
 
-def save_db(db):
-    with open(db_file, "wb") as f:
-        pickle.dump(db, f)
+def save_db(db_data):
+    with db_lock:
+        with open(db_file, "w", encoding="utf-8") as f:
+            json.dump(db_data, f, indent=4)
 
 
-# Load the database once into memory at startup
+# Load into memory once when module is initialized
 db = load_db()
