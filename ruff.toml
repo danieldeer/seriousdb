@@ -22,6 +22,8 @@ ignore = [
     "PLR0915", # allow functions with many statements
     "PLR2004", # allow comparisons against unnamed "magic" numbers
     "D105",    # allow undocumented magic methods (e.g. __init__, __eq__)
+    "D203",    # conflicts with D211 (blank-line-before-class); D211 wins
+    "D213",    # conflicts with D212 (multi-line-summary-first-line); D212 wins
     "N802",    # allow non-snake_case function names
     "N999",    # allow module names that don't follow snake_case
     "PLR0917", # allow functions with many positional arguments
