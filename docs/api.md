@@ -48,11 +48,15 @@ If the requested key does not exist, the API returns a `404` response.
 
 ### DELETE `/db`
 
+<<<<<<< HEAD
 Deletes a key-value pair from the database.
 
 Parameters:
 
 - `key` - The key to store.
+=======
+Removes the key and value from the database. Then returns the value associated with the key.
+>>>>>>> e402fe10fb33374ce2de0f20ba88e110a358122f
 
 For example:
 
@@ -60,6 +64,7 @@ For example:
 key: name
 ```
 
+<<<<<<< HEAD
 This returns:
 
 ```python
@@ -68,3 +73,13 @@ This returns:
   "deleted_value": "Alice"
 }
 ```
+=======
+returns:
+
+```text
+Alice
+```
+
+If the requested key does not exist, the API returns a `404` response.
+
+>>>>>>> e402fe10fb33374ce2de0f20ba88e110a358122f

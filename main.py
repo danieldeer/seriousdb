@@ -13,7 +13,6 @@ if not os.path.isfile(db_file):
 
 app = FastAPI()
 
-
 @app.delete("/db")
 async def delete(key: str):
     with open(db_file, "rb") as f:
@@ -50,7 +49,11 @@ async def get(key: str):
         db = json.load(f)
     if db is None:
         raise HTTPException(
+<<<<<<< HEAD
             status_code=503,
+=======
+            status_code=404,
+>>>>>>> e402fe10fb33374ce2de0f20ba88e110a358122f
             detail=f"Database file {db_file} could not be opened and loaded",
         )
     val = db.get(key, None)
