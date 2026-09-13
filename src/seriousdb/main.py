@@ -1,6 +1,6 @@
 from contextlib import asynccontextmanager
 
-from fastapi import Depends, FastAPI
+from fastapi import Depends, FastAPI, HTTPException
 
 from .cache import Cache, flush, load
 from .config import DB_FILE
@@ -31,4 +31,6 @@ async def put(key: str, value: str, cache: Cache = Depends(get_cache)):
 
 @app.get("/db")
 async def get(key: str, cache: Cache = Depends(get_cache)):
-    return select(key, cache)
+    if value := select(key, cache) is None:
+        raise HTTPException(status_code=404, detail=f"No value set for key {key}")
+    return value
