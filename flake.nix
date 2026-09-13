@@ -1,39 +1,22 @@
 {
-  description = "Development environment for seriousdb";
+	description = "Development environment for seriousdb";
 
-  inputs.nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+	inputs.nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+	inputs.flake-parts.url = "github:hercules-ci/flake-parts";
+	inputs.git-hooks-nix.url = "github:cachix/git-hooks.nix";
+	inputs.git-hooks-nix.inputs.nixpkgs.follows = "nixpkgs";
 
-  outputs =
-    { nixpkgs, ... }:
-    let
-      systems = [
-        "x86_64-linux"
-        "aarch64-linux"
-      ];
+	outputs = inputs@{ flake-parts, ... }:
+	flake-parts.lib.mkFlake {
+		inherit inputs;
+	} {
+		systems = inputs.nixpkgs.lib.systems.flakeExposed;
 
-      forAllSystems = nixpkgs.lib.genAttrs systems;
-    in
-    {
-      devShells = forAllSystems (
-        system:
-        let
-          pkgs = import nixpkgs { inherit system; };
-          python = pkgs.python314.withPackages (
-            pythonPackages: with pythonPackages; [
-              ruff
-              fastapi
-              fastapi-cli
-            ]
-          );
-        in
-        {
-          default = pkgs.mkShell {
-            packages = [ python ];
-            shellHook = ''
-              export PYTHONPATH="${toString ./.}/src''${PYTHONPATH:+:$PYTHONPATH}"
-            '';
-          };
-        }
-      );
-    };
+		imports = [
+			inputs.git-hooks-nix.flakeModule
+
+			./nix/dev
+			./nix/pkg
+		];
+	};
 }
