@@ -12,6 +12,8 @@ Parameters:
 
 - `key` - The key to store.
 - `value` - The value associated with the key.
+- `ttl` - Optional. Time-to-live in seconds. When provided, the key expires
+  and is no longer returned after that many seconds have elapsed.
 
 For example:
 
@@ -27,6 +29,14 @@ This stores:
 ```
 
 alongside any existing key-value pairs.
+
+Storing a value that expires after 60 seconds:
+
+```text
+key: session
+value: abc123
+ttl: 60
+```
 
 ### GET `/db`
 
@@ -45,3 +55,6 @@ Alice
 ```
 
 If the requested key does not exist, the API returns a `404` response.
+
+If the requested key has expired, it is removed and the API returns a `404`
+response (lazy expiration).
