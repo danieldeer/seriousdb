@@ -1,7 +1,7 @@
 import json
 import os
-from fastapi import FastAPI
-from fastapi import HTTPException
+import tempfile
+from fastapi import FastAPI, HTTPException
 from threading import Lock
 
 class Cache:
@@ -10,49 +10,44 @@ class Cache:
         self.db = None
         self.lock = Lock()
 
-
 def insert(key: str, value: str, cache: Cache):
-    with cache.lock:  
+    with cache.lock:
         if cache.db is None:
-            raise HTTPException(status_code=404, detail=f"Database file {cache.filename} could not be opened and loaded")
+            raise HTTPException(status_code=404, detail=f"Database not initialized")
         cache.db[key] = value
     return value
 
-
 def select(key: str, cache: Cache):
-    with cache.lock: 
+    with cache.lock:
         if cache.db is None:
-            raise HTTPException(status_code=404, detail=f"Database file {cache.filename} could not be opened and loaded")
+            raise HTTPException(status_code=404, detail=f"Database not initialized")
         val = cache.db.get(key, None)
-    if val is None:
-        raise HTTPException(status_code=404, detail=f"No value set for key {key}")
-    return val
-
+        if val is None:
+            raise HTTPException(status_code=404, detail=f"No value set for key {key}")
+        return val
 
 def load(filename: str, cache: Cache):
-    with cache.lock:  
-        db_file = filename
-        if not os.path.isfile(db_file):
-            with open(db_file, "wb") as f:
-                json_dumps = json.dumps({"default": "default"}).encode()
-                f.write(json_dumps)
+    with cache.lock:
+        if not os.path.isfile(filename):
+            with open(filename, "w") as f:
+                json.dump({"default": "default"}, f)
             cache.db = {"default": "default"}
         else:
-            with open(filename, "rb") as f:
-                binary_text = f.read()
-                json_text = binary_text.decode()
-                cache.db = json.loads(json_text)
+            with open(filename, "r") as f:
+                cache.db = json.load(f)
         cache.filename = filename
 
-
 def flush(cache: Cache):
-    with cache.lock:  
-        if cache.db is None:
+    with cache.lock:
+        if cache.db is None or cache.filename is None:
             return
-        with open(cache.filename, "wb+") as f:
-            json_dumps = json.dumps(cache.db).encode()
-            f.write(json_dumps)
-
+        
+        dir_name = os.path.dirname(os.path.abspath(cache.filename))
+        with tempfile.NamedTemporaryFile("w", dir=dir_name, delete=False) as tf:
+            json.dump(cache.db, tf)
+            temp_name = tf.name
+            
+        os.replace(temp_name, cache.filename)
 
 db_file = ".sdb"
 cache = Cache()
@@ -60,15 +55,12 @@ load(db_file, cache)
 
 app = FastAPI()
 
-
 @app.put("/db")
-async def put(key: str, value: str):
+def put(key: str, value: str):
     insert(key, value, cache)
     flush(cache)
     return value
 
-
 @app.get("/db")
-async def get(key: str):
-    val = select(key, cache)
-    return val
+def get(key: str):
+    return select(key, cache)
