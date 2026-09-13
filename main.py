@@ -53,6 +53,14 @@ def flush(cache: Cache):
             json_dumps = json.dumps(cache.db).encode()
             f.write(json_dumps)
 
+def delete(key: str, cache: Cache):
+    with cache.lock:
+        if cache.db is None:
+            raise HTTPException(status_code=404, detail=f"Database file {cache.filename} could not be opened and loaded")
+        if key not in cache.db:
+            raise HTTPException(status_code=404, detail=f"No value set for key {key}")
+        deleted_value = cache.db.pop(key)
+    return deleted_value
 
 db_file = ".sdb"
 cache = Cache()
@@ -61,17 +69,9 @@ load(db_file, cache)
 app = FastAPI()
 
 @app.delete("/db")
-async def delete(key: str):
-    with open(db_file, "rb") as f:
-        db = json.load(f)
-    if key not in db:
-        raise HTTPException(
-            status_code=404,
-            detail=f"No value set for key {key}",
-        )
-    deleted_value = db.pop(key)
-    with open(db_file, "w") as f:
-        json.dump(db, f)
+async def delete_endpoint(key: str):
+    deleted_value = delete(key, cache)
+    flush(cache)
     return {
         "key": key,
         "deleted_value": deleted_value,
