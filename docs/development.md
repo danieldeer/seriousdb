@@ -17,6 +17,26 @@ To sync development dependencies run following command:
 uv sync --group dev
 ```
 
+## Pre-commit hooks
+
+This project uses [`pre-commit`](https://pre-commit.com/) to run linting, formatting, and other
+checks automatically before each commit. After syncing the dev dependencies, install the git
+hooks once:
+
+```bash
+uv run pre-commit install
+```
+
+To run all hooks against the entire repository (e.g. before opening a pull request):
+
+```bash
+uv run pre-commit run --all-files
+```
+
+The configured hooks (see `.pre-commit-config.yaml`) include `uv lock` sync checks, trailing
+whitespace/end-of-file fixers, YAML/TOML validation, `ruff` linting and formatting, and `ty`
+type checking.
+
 ## Run locally
 
 ```bash

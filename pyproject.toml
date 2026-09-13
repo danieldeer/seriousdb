@@ -7,7 +7,7 @@ requires-python = ">=3.11"
 dependencies = ["fastapi[standard]>=0.141.1"]
 
 [dependency-groups]
-dev = ["ruff>=0.16.7", "ty>=0.0.80", "pre-commit"]
+dev = ["pre-commit>=4.0.0", "ruff>=0.16.7", "ty>=0.0.80"]
 
 [build-system]
 requires = ["setuptools>=61.0"]
