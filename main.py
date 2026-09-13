@@ -42,3 +42,25 @@ async def get(key: str):
     if val is None:
         raise HTTPException(status_code=404, detail=f"No value set for key {key}")
     return val
+
+
+@app.delete("/db")
+async def delete(key: str):
+    with open(db_file, "rb") as f:
+        db = pickle.load(f)
+
+    if key not in db:
+        raise HTTPException(
+            status_code=404,
+            detail=f"No value set for key {key}",
+        )
+
+    deleted_value = db.pop(key)
+
+    with open(db_file, "wb") as f:
+        pickle.dump(db, f)
+
+    return {
+        "key": key,
+        "deleted_value": deleted_value,
+    }
