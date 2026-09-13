@@ -20,10 +20,22 @@ uv sync --group dev
 ## Run locally
 
 ```bash
-uv run run.py 
+uv run run.py
 ```
 
-The server is available at `http://127.0.0.1:8000` and its interactive API documentation is at `/docs`.
+## Nix
+
+### Enter Nix develop
+
+```bash
+nix develop
+```
+
+## Starting in Nix develop
+
+```bash
+python run.py
+```
 
 ## Docker
 
@@ -31,6 +43,8 @@ The server is available at `http://127.0.0.1:8000` and its interactive API docum
 docker build -t seriousdb .
 docker run -p 8000:8000 seriousdb
 ```
+
+The server is available at `http://127.0.0.1:8000` and its interactive API documentation is at `/docs`.
 
 ## Formatting
 
@@ -48,6 +62,12 @@ Lint python files with `ruff`:
 uvx ruff check .
 ```
 
+### Nix in Nix develop
+
+```bash
+ruff check .
+```
+
 To fix linter errors and warning if possible run following command:
 
 ```bash
@@ -60,4 +80,10 @@ Type check the project with `ty`:
 
 ```bash
 uvx ty check
+```
+
+### Nix in Nix develop
+
+```bash
+ruff check --fix .
 ```
