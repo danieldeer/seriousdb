@@ -8,10 +8,14 @@ Interactive OpenAPI documentation is available at `http://127.0.0.1:8000/docs` w
 
 Stores or updates a key-value pair.
 
-Parameters:
+Request body (JSON):
 
-- `key` - The key to store.
-- `value` - The value associated with the key.
+```json
+{
+  "key": "The key to store",
+  "value": "The value associated with the key"
+}
+```
 
 For example:
 
