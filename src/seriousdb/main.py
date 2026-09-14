@@ -24,7 +24,7 @@ def get_cache() -> Cache:
 
 
 @app.put("/db")
-async def put(
+def put(
     key: str,
     value: Annotated[str, Body(embed=True)],
     background_tasks: BackgroundTasks,
