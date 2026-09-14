@@ -1,6 +1,7 @@
 # Persistence
 
-Data is stored in a local file named `.sdb` in the process working directory.
+Data is stored in a local file named `.sdb` in the process working directory by default.
+Set `SERIOUSDB_FILE` before starting the application to use a different path.
 
 The file contains a serialized Python dictionary written with the standard-library `json` module. On first startup, the application creates it with:
 

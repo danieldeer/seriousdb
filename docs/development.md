@@ -23,6 +23,11 @@ uv sync --group dev
 uv run run.py 
 ```
 
+To use a custom database file:
+```bash
+SERIOUSDB_FILE=/tmp/seriousdb.sdb uv run run.py
+```  
+
 ## Nix
 
 ### Enter Nix develop
