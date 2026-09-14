@@ -74,12 +74,15 @@ class Db_Engine:
                 f.write(
                     json.dumps({key: value}) + "\n"
                 )  # using dumps instead of dump cause we are working with string.not file object
-                """below two lines are to make sure that the OS actually write to the WAL file before returning success to the client.
-                Without os.fsync(), calling f.write() only puts data into operating system memory (page cache). 
+                """below two lines are to make sure that the OS actually writes the WAL entry to disk before returning success to the client.
+                Without flush()+fsync(), calling f.write() only puts data into Python's own internal buffer.
                 If the program crashes a millisecond later, that data vanishes before reaching the WAL file on disk.
-                So we are doing flush+fsync to make each PUT call crash safe.But this makes every single put() slower a bit.
-                
-                This can be toggled via the environment variable DB_SYNC_ON_WRITE=true/false to choose between maximum durability or high write throughput.
+
+                So we do flush()+fsync() to make each PUT call crash safe:
+                - flush() pushes the data out of Python's buffer via the actual write() syscall, into the OS's page cache.
+                - fsync() then asks the OS to push its page cache to the disk, and waits for the disk to commit its own onboard cache to physical storage.
+
+                This makes every single put() a bit slower, so it can be toggled via WAL_SYNC_ON_WRITE in config.py, to choose between maximum durability and high throughput.
                 """
                 if WAL_SYNC_ON_WRITE:
                     f.flush()  # push python buffer into OS
