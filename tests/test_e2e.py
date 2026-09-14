@@ -71,8 +71,8 @@ class DocumentedApiTests(unittest.TestCase):
         self.assertEqual(get_response.json(), "Alice")
     
         delete_response = self.client.delete("/db", params={"key": "name", "value": "Alice"})
-        self.assertEqual(put_response.status_code, 200)
-        self.assertEqual(put_response.json(), "Alice")
+        self.assertEqual(delete_response.status_code, 200)
+        self.assertEqual(delete_response.json(), "Alice")
 
         second_get_response = self.client.get("/db", params={"key": "name"})
         self.assertEqual(second_get_response.status_code, 404)
