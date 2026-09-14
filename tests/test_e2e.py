@@ -61,6 +61,22 @@ class DocumentedApiTests(unittest.TestCase):
         on_disk = json.loads(Path(main.DB_FILE).read_text())
         self.assertEqual(on_disk["name"], "Alice")
 
+    def test_put_stores_value_and_delete_removes_it(self):
+        put_response = self.client.put("/db", params={"key": "name", "value": "Alice"})
+        self.assertEqual(put_response.status_code, 200)
+        self.assertEqual(put_response.json(), "Alice")
+
+        get_response = self.client.get("/db", params={"key": "name"})
+        self.assertEqual(get_response.status_code, 200)
+        self.assertEqual(get_response.json(), "Alice")
+    
+        delete_response = self.client.delete("/db", params={"key": "name", "value": "Alice"})
+        self.assertEqual(put_response.status_code, 200)
+        self.assertEqual(put_response.json(), "Alice")
+
+        second_get_response = self.client.get("/db", params={"key": "name"})
+        self.assertEqual(second_get_response.status_code, 404)
+
 
 if __name__ == "__main__":
     unittest.main()
