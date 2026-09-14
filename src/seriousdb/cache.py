@@ -1,6 +1,13 @@
 import json
+import logging
 import os
+import time
 from threading import Lock
+
+
+logger = logging.getLogger(__name__)
+
+DEFAULT_DB = {"default": "default"}
 
 
 class Cache:
@@ -10,15 +17,28 @@ class Cache:
         self.lock = Lock()
 
 
+def _write_default(filename: str) -> dict:
+    with open(filename, "wb") as f:
+        f.write(json.dumps(DEFAULT_DB).encode())
+    return dict(DEFAULT_DB)
+
+
 def load(filename: str, cache: Cache):
     with cache.lock:
         if not os.path.isfile(filename):
-            with open(filename, "wb") as f:
-                f.write(json.dumps({"default": "default"}).encode())
-            cache.db = {"default": "default"}
+            cache.db = _write_default(filename)
         else:
-            with open(filename, "rb") as f:
-                cache.db = json.loads(f.read().decode())
+            try:
+                with open(filename, "rb") as f:
+                    cache.db = json.loads(f.read().decode())
+            except (json.JSONDecodeError, UnicodeDecodeError) as e:
+                backup = f"{filename}.corrupt-{int(time.time())}"
+                os.replace(filename, backup)
+                logger.warning(
+                    "Corrupt database file %s (%s); moved to %s and starting fresh",
+                    filename, e, backup,
+                )
+                cache.db = _write_default(filename)
         cache.filename = filename
 
 

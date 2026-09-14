@@ -5,8 +5,12 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
-    "black>=26.5.1",
     "fastapi[standard]>=0.141.1",
+]
+
+[dependency-groups]
+dev = [
+    "ruff>=0.16.7",
 ]
 
 [build-system]

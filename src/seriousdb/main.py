@@ -1,18 +1,22 @@
+from contextlib import asynccontextmanager
 from typing import Annotated
 
 from fastapi import Body, Depends, FastAPI
 
-from .cache import Cache, load, flush
-from .db import insert, select
+from .cache import Cache, flush, load
 from .config import DB_FILE
+from .db import insert, select
 
-app = FastAPI()
 cache = Cache()
 
 
-@app.on_event("startup")
-def startup():
+@asynccontextmanager
+async def lifespan(app: FastAPI):
     load(DB_FILE, cache)
+    yield
+
+
+app = FastAPI(lifespan=lifespan)
 
 
 def get_cache() -> Cache:
@@ -23,7 +27,7 @@ def get_cache() -> Cache:
 async def put(
     key: str,
     value: Annotated[str, Body(embed=True)],
-    cache: Cache = Depends(get_cache),
+    cache: Annotated[Cache, Depends(get_cache)],
 ):
     insert(key, value, cache)
     flush(cache)
@@ -31,5 +35,5 @@ async def put(
 
 
 @app.get("/db")
-async def get(key: str, cache: Cache = Depends(get_cache)):
+async def get(key: str, cache: Annotated[Cache, Depends(get_cache)]):
     return select(key, cache)
