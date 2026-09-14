@@ -1,35 +1,39 @@
 from contextlib import asynccontextmanager
-from typing import Annotated
 
-from fastapi import Depends, FastAPI
+from fastapi import FastAPI, HTTPException
 
-from .cache import Cache, flush, load
-from .config import DB_FILE
-from .db import insert, select
+from .db_engine import Db_Engine
 
-cache = Cache()
+# First we initiate our database
+db = Db_Engine()
 
 
+# now we will create a bridge between the FastAPI server and our Db_Engine
+# FastAPI will run everything before 'yield' and pause there.It will keep the server running and handle GET,PUT requests.
+# When the server is about to shut down it will execute instructions below 'yield'
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    load(DB_FILE, cache)
+    # first load the database file into memory
+    db.boot()
+
     yield
+
+    # flush everything to disk before shutting down
+    db.compact()
 
 
 app = FastAPI(lifespan=lifespan)
 
 
-def get_cache() -> Cache:
-    return cache
-
-
 @app.put("/db")
-async def put(key: str, value: str, cache: Annotated[Cache, Depends(get_cache)]):
-    insert(key, value, cache)
-    flush(cache)
+def put(key: str, value: str):
+    db.put(key, value)
     return value
 
 
 @app.get("/db")
-async def get(key: str, cache: Annotated[Cache, Depends(get_cache)]):
-    return select(key, cache)
+def get(key: str):
+    val = db.get(key)
+    if val is None:
+        raise HTTPException(status_code=404, detail=f"No value set for key {key}")
+    return val
