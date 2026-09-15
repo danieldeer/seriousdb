@@ -78,39 +78,111 @@ class DocumentedApiTests(unittest.TestCase):
         # docs/persistence.md: a new database file is seeded with {"default": "default"}
         response = self.client.get("/db/keys")
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.json(), ["default"])
+        self.assertEqual(response.json(), {"keys": ["default"], "next_cursor": None})
 
-    def test_get_keys_returns_list_type(self):
+    def test_get_keys_returns_expected_shape(self):
         response = self.client.get("/db/keys")
-        self.assertIsInstance(response.json(), list)
+        body = response.json()
+        self.assertIn("keys", body)
+        self.assertIn("next_cursor", body)
+        self.assertIsInstance(body["keys"], list)
 
     def test_get_keys_reflects_newly_put_key(self):
         self.client.put("/db", params={"key": "name", "value": "Alice"})
 
         response = self.client.get("/db/keys")
         self.assertEqual(response.status_code, 200)
-        self.assertIn("name", response.json())
+        self.assertIn("name", response.json()["keys"])
 
-    def test_get_keys_returns_multiple_keys(self):
+    def test_get_keys_returns_multiple_keys_sorted(self):
         self.client.put("/db", params={"key": "name", "value": "Alice"})
         self.client.put("/db", params={"key": "age", "value": "30"})
 
         response = self.client.get("/db/keys")
-        self.assertCountEqual(response.json(), ["default", "name", "age"])
+        self.assertEqual(response.json()["keys"], sorted(["default", "name", "age"]))
 
     def test_get_keys_does_not_duplicate_on_overwrite(self):
         self.client.put("/db", params={"key": "name", "value": "Alice"})
         self.client.put("/db", params={"key": "name", "value": "Bob"})
 
         response = self.client.get("/db/keys")
-        self.assertEqual(response.json().count("name"), 1)
+        self.assertEqual(response.json()["keys"].count("name"), 1)
 
     def test_get_keys_excludes_deleted_key(self):
         self.client.put("/db", params={"key": "name", "value": "Alice"})
         self.client.delete("/db", params={"key": "name"})
 
         response = self.client.get("/db/keys")
-        self.assertNotIn("name", response.json())
+        self.assertNotIn("name", response.json()["keys"])
+
+    def test_get_keys_respects_limit(self):
+        for i in range(5):
+            self.client.put("/db", params={"key": f"key{i}", "value": "v"})
+
+        response = self.client.get("/db/keys", params={"limit": 2})
+        body = response.json()
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(body["keys"]), 2)
+        self.assertIsNotNone(body["next_cursor"])
+
+    def test_get_keys_last_page_has_no_next_cursor(self):
+        for i in range(3):
+            self.client.put("/db", params={"key": f"key{i}", "value": "v"})
+
+        response = self.client.get("/db/keys", params={"limit": 100})
+        body = response.json()
+        self.assertIsNone(body["next_cursor"])
+
+    def test_get_keys_cursor_resumes_after_given_key(self):
+        for i in range(5):
+            self.client.put("/db", params={"key": f"key{i}", "value": "v"})
+
+        first_page = self.client.get("/db/keys", params={"limit": 2}).json()
+        second_page = self.client.get(
+            "/db/keys", params={"limit": 2, "cursor": first_page["next_cursor"]}
+        ).json()
+
+        self.assertTrue(all(k > first_page["next_cursor"] for k in second_page["keys"]))
+        self.assertNotEqual(first_page["keys"], second_page["keys"])
+
+    def test_get_keys_paginates_through_all_keys_without_duplicates_or_gaps(self):
+        expected_keys = set()
+        for i in range(7):
+            key = f"key{i}"
+            self.client.put("/db", params={"key": key, "value": "v"})
+            expected_keys.add(key)
+        expected_keys.add("default")  # seeded key
+
+        collected = []
+        cursor = None
+        while True:
+            params = {"limit": 3}
+            if cursor:
+                params["cursor"] = cursor
+            body = self.client.get("/db/keys", params=params).json()
+            collected.extend(body["keys"])
+            cursor = body["next_cursor"]
+            if cursor is None:
+                break
+
+        self.assertEqual(set(collected), expected_keys)
+        self.assertEqual(len(collected), len(set(collected)))  # no duplicates
+
+    def test_get_keys_rejects_limit_over_max(self):
+        response = self.client.get("/db/keys", params={"limit": 501})
+        self.assertEqual(response.status_code, 400)
+
+    def test_get_keys_rejects_zero_limit(self):
+        response = self.client.get("/db/keys", params={"limit": 0})
+        self.assertEqual(response.status_code, 400)
+
+    def test_get_keys_rejects_negative_limit(self):
+        response = self.client.get("/db/keys", params={"limit": -5})
+        self.assertEqual(response.status_code, 400)
+
+    def test_get_keys_accepts_max_limit_exactly(self):
+        response = self.client.get("/db/keys", params={"limit": 500})
+        self.assertEqual(response.status_code, 200)
 
 
 if __name__ == "__main__":

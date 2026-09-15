@@ -3,6 +3,7 @@ import logging
 import os
 import time
 from threading import Lock
+
 from fastapi import HTTPException
 
 logger = logging.getLogger(__name__)
@@ -16,7 +17,6 @@ class Cache:
         self.db = None
         self.lock = Lock()
 
-
     def insert(self, key: str, value: str):
         with self.lock:
             if self.db is None:
@@ -26,7 +26,6 @@ class Cache:
                 )
             self.db[key] = value
         return value
-
 
     def select(self, key: str):
         with self.lock:
@@ -39,7 +38,6 @@ class Cache:
         if val is None:
             raise HTTPException(status_code=404, detail=f"No value set for key {key}")
         return val
-
 
     def delete(self, key: str):
         with self.lock:
@@ -73,7 +71,6 @@ class Cache:
                     self.db = _write_default(filename)
             self.filename = filename
 
-
     def flush(self):
         with self.lock:
             if self.db is None:
@@ -81,10 +78,27 @@ class Cache:
             with open(self.filename, "wb+") as f:
                 f.write(json.dumps(self.db).encode())
 
+    def keys(
+        self, limit: int, cursor: str | None = None
+    ) -> tuple[list[str], str | None]:
+        with self.lock:
+            if self.db is None:
+                raise HTTPException(
+                    status_code=500,
+                    detail=f"Database file {self.filename} could not be opened and loaded",
+                )
+            all_keys = sorted(self.db.keys())
+
+        if cursor:
+            all_keys = [k for k in all_keys if k > cursor]
+
+        page = all_keys[:limit]
+        next_cursor = page[-1] if len(page) == limit else None
+
+        return page, next_cursor
+
 
 def _write_default(filename: str) -> dict:
     with open(filename, "wb") as f:
         f.write(json.dumps(DEFAULT_DB).encode())
     return dict(DEFAULT_DB)
-
-

@@ -1,10 +1,10 @@
 from contextlib import asynccontextmanager
 from typing import Annotated
 
-from fastapi import BackgroundTasks, Depends, FastAPI
+from fastapi import BackgroundTasks, Depends, FastAPI, HTTPException
 
 from .cache import Cache
-from .config import DB_FILE
+from .config import DB_FILE, DEFAULT_KEYS_LIMIT, MAX_KEYS_LIMIT
 
 cache = Cache()
 
@@ -35,9 +35,19 @@ def put(
 
 
 @app.get("/db/keys")
-def get_Keys(cache: Annotated[Cache, Depends(get_cache)]):
-    keys = cache.db.keys()
-    return list(keys)
+def get_keys(
+    cache: Annotated[Cache, Depends(get_cache)],
+    limit: int = DEFAULT_KEYS_LIMIT,
+    cursor: str | None = None,
+):
+    if not 1 <= limit <= MAX_KEYS_LIMIT:
+        raise HTTPException(
+            status_code=400, detail=f"limit must be between 1 and {MAX_KEYS_LIMIT}"
+        )
+
+    keys, next_cursor = cache.keys(limit=limit, cursor=cursor)
+    return {"keys": keys, "next_cursor": next_cursor}
+
 
 @app.get("/db")
 def get(key: str, cache: Annotated[Cache, Depends(get_cache)]):
