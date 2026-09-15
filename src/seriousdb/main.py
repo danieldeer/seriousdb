@@ -4,8 +4,9 @@ from typing import Annotated
 
 from fastapi import BackgroundTasks, Depends, FastAPI, HTTPException, Query
 
-from .cache import Cache
+from .cache import Cache, JsonValue
 from .config import DB_FILE
+from .parser import parse_value
 
 cache = Cache()
 
@@ -23,30 +24,31 @@ def get_cache() -> Cache:
     return cache
 
 
-@app.put("/db")
+@app.put("/db", response_model=None)
 def put(
     key: Annotated[str, Query(min_length=1)],
     value: str,
     background_tasks: BackgroundTasks,
     cache: Annotated[Cache, Depends(get_cache)],
-) -> str:
-    cache.insert(key, value)
+) -> JsonValue:
+    parsed_value = parse_value(value)
+    cache.insert(key, parsed_value)
     background_tasks.add_task(cache.flush)
-    return value
+    return parsed_value
 
 
-@app.get("/db")
-def get(key: str, cache: Annotated[Cache, Depends(get_cache)]) -> str:
+@app.get("/db", response_model=None)
+def get(key: str, cache: Annotated[Cache, Depends(get_cache)]) -> JsonValue:
     return cache.select(key)
 
 
-@app.head("/db")
-async def head(key: str, cache: Annotated[Cache, Depends(get_cache)]) -> str:
+@app.head("/db", response_model=None)
+async def head(key: str, cache: Annotated[Cache, Depends(get_cache)]) -> JsonValue:
     return cache.select(key)
 
 
 @app.get("/db/all")
-def get_all(cache: Annotated[Cache, Depends(get_cache)]) -> dict[str, str]:
+def get_all(cache: Annotated[Cache, Depends(get_cache)]) -> dict[str, JsonValue]:
     with cache.lock:
         if cache.db is None:
             raise HTTPException(

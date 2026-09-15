@@ -11,7 +11,7 @@ Stores or updates a key-value pair.
 Parameters:
 
 - `key` - The key to store.
-- `value` - The value associated with the key.
+- `value` - The value associated with the key. The value is parsed as JSON, allowing strings, numbers, booleans, `null`, arrays, and objects.
 
 For example:
 
@@ -26,7 +26,44 @@ This stores:
 {"name": "Alice"}
 ```
 
-alongside any existing key-value pairs.
+Numbers and other JSON values can also be stored:
+
+```text
+key: age
+value: 42
+```
+
+stores:
+
+```python
+{"age": 42}
+```
+
+To store a number as a string, use JSON string syntax:
+
+```text
+key: code
+value: "42"
+```
+
+This stores:
+
+```python
+{"code": "42"}
+```
+
+The same applies to other JSON values:
+
+```text
+value: 3.14
+value: true
+value: false
+value: null
+value: [1, 2, 3]
+value: {"name": "Alice"}
+```
+
+These are stored as their corresponding JSON/Python types.
 
 ### GET `/db`
 
