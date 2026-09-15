@@ -78,6 +78,25 @@ class Cache:
             with open(self.filename, "wb+") as f:
                 f.write(json.dumps(self.db).encode())
 
+    def keys(
+        self, limit: int, cursor: str | None = None
+    ) -> tuple[list[str], str | None]:
+        with self.lock:
+            if self.db is None:
+                raise HTTPException(
+                    status_code=500,
+                    detail=f"Database file {self.filename} could not be opened and loaded",
+                )
+            all_keys = sorted(self.db.keys())
+
+        if cursor:
+            all_keys = [k for k in all_keys if k > cursor]
+
+        page = all_keys[:limit]
+        next_cursor = page[-1] if len(page) == limit else None
+
+        return page, next_cursor
+
 
 def _write_default(filename: str) -> dict[str, str]:
     with open(filename, "wb") as f:
