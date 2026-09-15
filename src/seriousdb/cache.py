@@ -24,8 +24,9 @@ class Cache:
                     status_code=500,
                     detail=f"Database file {self.filename} could not be opened and loaded",
                 )
+            created = key not in self.db
             self.db[key] = value
-        return value
+        return created
 
 
     def select(self, key: str):

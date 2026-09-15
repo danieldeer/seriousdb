@@ -35,7 +35,7 @@ class DocumentedApiTests(unittest.TestCase):
 
     def test_put_stores_value_and_get_retrieves_it(self):
         put_response = self.client.put("/db", params={"key": "name", "value": "Alice"})
-        self.assertEqual(put_response.status_code, 200)
+        self.assertEqual(put_response.status_code, 201)
         self.assertEqual(put_response.json(), "Alice")
 
         get_response = self.client.get("/db", params={"key": "name"})
@@ -60,6 +60,18 @@ class DocumentedApiTests(unittest.TestCase):
 
         on_disk = json.loads(Path(main.DB_FILE).read_text())
         self.assertEqual(on_disk["name"], "Alice")
+
+    def test_put_returns_201_on_create_and_200_on_update(self):
+        # Issue #136 / RFC9110: 201 on first creation, 200 on modify.
+        create_response = self.client.put(
+            "/db", params={"key": "name", "value": "Alice"}
+        )
+        self.assertEqual(create_response.status_code, 201)
+        self.assertEqual(create_response.json(), "Alice")
+
+        update_response = self.client.put("/db", params={"key": "name", "value": "Bob"})
+        self.assertEqual(update_response.status_code, 200)
+        self.assertEqual(update_response.json(), "Bob")
 
 
 if __name__ == "__main__":

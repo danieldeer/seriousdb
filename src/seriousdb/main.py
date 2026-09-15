@@ -2,6 +2,7 @@ from contextlib import asynccontextmanager
 from typing import Annotated
 
 from fastapi import BackgroundTasks, Depends, FastAPI
+from fastapi.responses import JSONResponse
 
 from .cache import Cache
 from .config import DB_FILE
@@ -29,9 +30,9 @@ def put(
     background_tasks: BackgroundTasks,
     cache: Annotated[Cache, Depends(get_cache)],
 ):
-    cache.insert(key, value)
+    created = cache.insert(key, value)
     background_tasks.add_task(cache.flush)
-    return value
+    return JSONResponse(status_code=201 if created else 200, content=value)
 
 
 @app.get("/db")
