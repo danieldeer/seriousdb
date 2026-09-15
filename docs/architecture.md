@@ -13,5 +13,5 @@ At startup, the service loads `.sdb` into the in-memory dictionary. It creates t
 1. FastAPI receives a request.
 2. A `PUT` reads the value from its JSON request body.
 3. The route accesses the in-memory dictionary.
-4. A `PUT` updates and rewrites the file; a `GET` reads the requested value.
+4. A `PUT` updates the dictionary and schedules it to be written to disk; a `GET` reads the requested value; a `HEAD` only returns the header.
 5. The route returns the value or a `404` error.

@@ -44,6 +44,16 @@ class DocumentedApiTests(unittest.TestCase):
         self.assertEqual(get_response.status_code, 200)
         self.assertEqual(get_response.json(), "Alice")
 
+    def test_put_stores_value_and_head_checks_for_it(self):
+        put_response = self.client.put(
+            "/db", params={"key": "name"}, json={"value": "Alice"}
+        )
+        self.assertEqual(put_response.status_code, 200)
+        self.assertEqual(put_response.json(), "Alice")
+
+        head_response = self.client.head("/db", params={"key": "name"})
+        self.assertEqual(head_response.status_code, 200)
+
     def test_put_overwrites_existing_key(self):
         self.client.put("/db", params={"key": "name"}, json={"value": "Alice"})
         self.client.put("/db", params={"key": "name"}, json={"value": "Bob"})
@@ -52,6 +62,11 @@ class DocumentedApiTests(unittest.TestCase):
         self.assertEqual(response.json(), "Bob")
 
     def test_get_missing_key_returns_404(self):
+        # docs/api.md: "If the requested key does not exist, the API returns a 404 response."
+        response = self.client.get("/db", params={"key": "does-not-exist"})
+        self.assertEqual(response.status_code, 404)
+
+    def test_head_missing_key_returns_404(self):
         # docs/api.md: "If the requested key does not exist, the API returns a 404 response."
         response = self.client.get("/db", params={"key": "does-not-exist"})
         self.assertEqual(response.status_code, 404)
