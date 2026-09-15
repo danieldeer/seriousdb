@@ -1,12 +1,12 @@
 import json
 import logging
-import types
 import os
 import time
+import types
+from dataclasses import dataclass, field
+from dataclasses import fields as dataclass_fields
 from threading import Lock
-from dataclasses import dataclass, field, fields as dataclass_fields
-from typing import get_origin, get_args, Union
-
+from typing import Union, get_args, get_origin
 
 from .exceptions import ResourceNotFoundError, ServiceUnavailableError
 
@@ -15,45 +15,54 @@ logger = logging.getLogger(__name__)
 DEFAULT_DB = {"default": "default"}
 
 
-
 @dataclass
 class Cache:
     filename: str | None = None
     db: dict[str, str] | None = None
     lock: Lock = field(default_factory=Lock, init=False)
-    
+
     def __post_init__(self):
         for f in dataclass_fields(self):
             field_name = f.name
             defined_type = f.type
             value = getattr(self, field_name)
-        
+
             origin = get_origin(defined_type)
-            is_union = origin is Union or (hasattr(types, "UnionType") and origin is types.UnionType)
+            is_union = origin is Union or (
+                hasattr(types, "UnionType") and origin is types.UnionType
+            )
+
             allowed_types = get_args(defined_type) if is_union else (defined_type,)
 
-            
             # Check if None is allowed for this field
             none_allowed = type(None) in allowed_types
             if value is None:
                 if none_allowed:
                     continue
                 else:
-                    raise TypeError(f"Field '{field_name}' cannot be None, expected '{defined_type}'")
-            
-            
+                    raise TypeError(
+                        f"Field '{field_name}' cannot be None, expected '{defined_type}'"
+                    )
+
             #  Extract base classes for runtime checking (e.g., dict[str, str] -> dict)
             base_types = tuple((get_origin(t) or t) for t in allowed_types)
 
             #  Outer structural check
             if not isinstance(value, base_types):
-                raise TypeError(f"Field '{field_name}' got an invalid type: '{type(value).__name__}' expected '{defined_type}'")
-            
+                raise TypeError(
+                    f"Field '{field_name}' got an invalid type: '{type(value).__name__}' expected '{defined_type}'"
+                )
 
-            if isinstance(value, dict) and any(t == dict[str, str] for t in allowed_types):
-                if not all(isinstance(k, str) and isinstance(v, str) for k, v in value.items()):
-                    raise TypeError(f"Field '{field_name}' must be a dict[str, str], but contains non-string elements.")
-
+            if (
+                isinstance(value, dict)
+                and any(t == dict[str, str] for t in allowed_types)
+                and not all(
+                    isinstance(k, str) and isinstance(v, str) for k, v in value.items()
+                )
+            ):
+                raise TypeError(
+                    f"Field '{field_name}' must be a dict[str, str], but contains non-string elements."
+                )
 
     def insert(self, key: str, value: str) -> str:
         with self.lock:
