@@ -1,0 +1,32 @@
+name: Feature request
+description: Describe a use case or improvement for seriousdb.
+labels: [enhancement]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Check [existing issues](https://github.com/danieldeer/seriousdb/issues) and
+        [pull requests](https://github.com/danieldeer/seriousdb/pulls) for related work.
+        Focus on the problem and the outcome you need. An implementation plan is not required.
+
+        If you would like to work on a change, follow the
+        [contribution guide](https://github.com/danieldeer/seriousdb/blob/main/docs/contributing.md).
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem would this address?
+      description: Describe what you are trying to do, what gets in the way, and why it matters.
+    validations:
+      required: true
+  - type: textarea
+    id: outcome
+    attributes:
+      label: What outcome would help?
+      description: Describe how you would use the improvement and what it would let you do.
+    validations:
+      required: true
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional context
+      description: Add any current workarounds, examples, or links to related issues and pull requests.
