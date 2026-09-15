@@ -16,13 +16,14 @@ uv sync
 uv run run.py
 ```
 
-The server is available at `http://0.0.0.0:8000`.
+The server is available at `http://127.0.0.1:8000`.
+> To change the default IP and PORT, define the environment variables `APP_HOST` and `APP_PORT` to your preferred values.
 
 Interactive API documentation is available at:
 
-- [Swagger UI](http://0.0.0.0:8000/docs)
-- [ReDoc](http://0.0.0.0:8000/redoc)
-- [OpenAPI schema](http://0.0.0.0:8000/openapi.json)
+- [Swagger UI](http://127.0.0.1:8000/docs)
+- [ReDoc](http://127.0.0.1:8000/redoc)
+- [OpenAPI schema](http://127.0.0.1:8000/openapi.json)
 
 ## Documentation
 
