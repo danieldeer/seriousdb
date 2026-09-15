@@ -59,3 +59,37 @@ key: name
 If the requested key exists, the API returns a `200` response.
 
 If the requested key does not exist, the API returns a `404` response.
+
+### DELETE `/db`
+
+Deletes a key-value pair.
+
+For example:
+
+```text
+key: name
+```
+returns:
+
+```text
+Alice
+```
+
+and deletes the key-value pair.
+
+If the requested key exists, the API returns a `200` response.
+
+If the requested key does not exist, the API returns a `404` response.
+
+### GET `/db/all`
+
+Lists all key-values stored.
+
+For example:
+
+```json
+{
+  "default": "default",
+  "name": "Alice",
+}
+```
