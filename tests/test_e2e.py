@@ -35,7 +35,7 @@ class DocumentedApiTests(unittest.TestCase):
 
     def test_put_stores_value_and_get_retrieves_it(self):
         put_response = self.client.put("/db", params={"key": "name", "value": "Alice"})
-        self.assertEqual(put_response.status_code, 200)
+        self.assertEqual(put_response.status_code, 201)
         self.assertEqual(put_response.json(), "Alice")
 
         get_response = self.client.get("/db", params={"key": "name"})
@@ -44,15 +44,20 @@ class DocumentedApiTests(unittest.TestCase):
 
     def test_put_stores_value_and_head_checks_for_it(self):
         put_response = self.client.put("/db", params={"key": "name", "value": "Alice"})
-        self.assertEqual(put_response.status_code, 200)
+        self.assertEqual(put_response.status_code, 201)
         self.assertEqual(put_response.json(), "Alice")
 
         head_response = self.client.head("/db", params={"key": "name"})
         self.assertEqual(head_response.status_code, 200)
 
     def test_put_overwrites_existing_key(self):
-        self.client.put("/db", params={"key": "name", "value": "Alice"})
-        self.client.put("/db", params={"key": "name", "value": "Bob"})
+        create_response = self.client.put(
+            "/db", params={"key": "name", "value": "Alice"}
+        )
+        self.assertEqual(create_response.status_code, 201)
+
+        update_response = self.client.put("/db", params={"key": "name", "value": "Bob"})
+        self.assertEqual(update_response.status_code, 200)
 
         response = self.client.get("/db", params={"key": "name"})
         self.assertEqual(response.json(), "Bob")

@@ -8,6 +8,9 @@ Interactive OpenAPI documentation is available at `http://127.0.0.1:8000/docs` w
 
 Stores or updates a key-value pair.
 
+- If the key does not exist yet, the API respond with `201 Created`.
+- If the key already exists, the API respond with `200 OK` and overwrites the stored value.
+
 Parameters:
 
 - `key` - The key to store.
