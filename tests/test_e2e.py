@@ -64,7 +64,7 @@ class DocumentedApiTests(unittest.TestCase):
 
     def test_head_missing_key_returns_404(self):
         # docs/api.md: "If the requested key does not exist, the API returns a 404 response."
-        response = self.client.get("/db", params={"key": "does-not-exist"})
+        response = self.client.head("/db", params={"key": "does-not-exist"})
         self.assertEqual(response.status_code, 404)
 
     def test_put_persists_to_db_file_on_disk(self):

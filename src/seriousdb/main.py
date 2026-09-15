@@ -2,7 +2,7 @@ from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 from typing import Annotated
 
-from fastapi import BackgroundTasks, Depends, FastAPI, Query
+from fastapi import BackgroundTasks, Depends, FastAPI, HTTPException, Query
 
 from .cache import Cache, require_db
 from .config import DB_FILE
@@ -62,3 +62,10 @@ def delete(
     value = cache.delete(key)
     background_tasks.add_task(cache.flush)
     return value
+
+
+@app.get("/health")
+def health(cache: Annotated[Cache, Depends(get_cache)]):
+    if cache.db is None:
+        raise HTTPException(status_code=503, detail="Service unavailable")
+    return {"status": "ok"}

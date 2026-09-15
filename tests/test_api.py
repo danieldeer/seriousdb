@@ -52,7 +52,10 @@ def test_get_missing_key_returns_404(client):
     )
 
     assert response.status_code == 404
-    assert response.json() == {"detail": "No value set for key does_not_exist"}
+    assert response.json() == {
+        "detail": "No value set for key does_not_exist",
+        "error": "resource_not_found",
+    }
 
 
 def test_get_all_returns_all_values(client):
