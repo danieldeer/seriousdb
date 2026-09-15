@@ -44,6 +44,6 @@ async def head(key: str, cache: Annotated[Cache, Depends(get_cache)]):
     return cache.select(key)
 
 
-@app.delete("/db")
+@app.delete("/db", status_code=204)
 def delete(key: str, cache: Annotated[Cache, Depends(get_cache)]):
     return cache.delete(key)
