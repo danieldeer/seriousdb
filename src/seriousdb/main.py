@@ -35,7 +35,7 @@ def put(
 
 
 @app.get("/db/keys")
-def getKeys():
+def get_Keys(cache: Annotated[Cache, Depends(get_cache)]):
     keys = cache.db.keys()
     return list(keys)
 

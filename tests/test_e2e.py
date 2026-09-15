@@ -74,6 +74,44 @@ class DocumentedApiTests(unittest.TestCase):
         on_disk = json.loads(Path(main.DB_FILE).read_text())
         self.assertEqual(on_disk["name"], "Alice")
 
+    def test_get_keys_on_fresh_database_returns_seeded_default_key(self):
+        # docs/persistence.md: a new database file is seeded with {"default": "default"}
+        response = self.client.get("/db/keys")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json(), ["default"])
+
+    def test_get_keys_returns_list_type(self):
+        response = self.client.get("/db/keys")
+        self.assertIsInstance(response.json(), list)
+
+    def test_get_keys_reflects_newly_put_key(self):
+        self.client.put("/db", params={"key": "name", "value": "Alice"})
+
+        response = self.client.get("/db/keys")
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("name", response.json())
+
+    def test_get_keys_returns_multiple_keys(self):
+        self.client.put("/db", params={"key": "name", "value": "Alice"})
+        self.client.put("/db", params={"key": "age", "value": "30"})
+
+        response = self.client.get("/db/keys")
+        self.assertCountEqual(response.json(), ["default", "name", "age"])
+
+    def test_get_keys_does_not_duplicate_on_overwrite(self):
+        self.client.put("/db", params={"key": "name", "value": "Alice"})
+        self.client.put("/db", params={"key": "name", "value": "Bob"})
+
+        response = self.client.get("/db/keys")
+        self.assertEqual(response.json().count("name"), 1)
+
+    def test_get_keys_excludes_deleted_key(self):
+        self.client.put("/db", params={"key": "name", "value": "Alice"})
+        self.client.delete("/db", params={"key": "name"})
+
+        response = self.client.get("/db/keys")
+        self.assertNotIn("name", response.json())
+
 
 if __name__ == "__main__":
     unittest.main()
