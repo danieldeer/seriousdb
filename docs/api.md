@@ -59,8 +59,6 @@ For example:
 ```
 
 
-If the requested key does not exist, the API returns a `404` response.
-
 ### HEAD `/db`
 
 Checks if the requested key exists in the database.
