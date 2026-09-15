@@ -27,11 +27,11 @@ class DocumentedApiTests(unittest.TestCase):
         self.client.__enter__()
         self.addCleanup(self.client.__exit__, None, None, None)
 
-    def test_fresh_database_seeds_documented_default_key(self):
-        # docs/persistence.md: a new database file is seeded with {"default": "default"}
-        response = self.client.get("/db", params={"key": "default"})
+    def test_fresh_database_is_empty_dict(self):
+        # docs/persistence.md: a new database file is seeded with {}
+        response = self.client.get("/db/all")
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.json(), "default")
+        self.assertEqual(response.json(), {})
 
     def test_put_stores_value_and_get_retrieves_it(self):
         put_response = self.client.put("/db", params={"key": "name", "value": "Alice"})

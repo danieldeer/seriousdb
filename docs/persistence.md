@@ -5,7 +5,7 @@ Data is stored in a local file named `.sdb` in the process working directory.
 The file contains a serialized Python dictionary written with the standard-library `json` module. On first startup, the application creates it with:
 
 ```python
-{"default": "default"}
+{}
 ```
 
 Each `PUT` loads the complete dictionary, changes one key, and writes the complete dictionary back to disk.
