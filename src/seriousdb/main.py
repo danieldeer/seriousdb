@@ -1,17 +1,18 @@
-from collections.abc import AsyncGenerator
+import logging
 from contextlib import asynccontextmanager
 from typing import Annotated
 
 from fastapi import BackgroundTasks, Depends, FastAPI, HTTPException, Query
 
 from .cache import Cache
-from .config import DB_FILE
+from .config import DB_FILE, LOG_LEVEL
 
 cache = Cache()
 
 
 @asynccontextmanager
-async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
+async def lifespan(app: FastAPI):
+    logging.basicConfig(level=LOG_LEVEL.upper())
     cache.load(DB_FILE)
     yield
 
