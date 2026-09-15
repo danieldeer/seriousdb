@@ -41,7 +41,7 @@ def getKeys():
 
 @app.get("/db")
 def get(key: str, cache: Annotated[Cache, Depends(get_cache)]):
-    return cache.select(key)[0]
+    return cache.select(key)
 
 
 @app.head("/db")
