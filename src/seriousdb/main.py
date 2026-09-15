@@ -34,9 +34,14 @@ def put(
     return value
 
 
+@app.get("/db/keys")
+def getKeys():
+    keys = cache.db.keys()
+    return list(keys)
+
 @app.get("/db")
 def get(key: str, cache: Annotated[Cache, Depends(get_cache)]):
-    return cache.select(key)
+    return cache.select(key)[0]
 
 
 @app.head("/db")
