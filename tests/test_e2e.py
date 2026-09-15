@@ -27,7 +27,7 @@ class DocumentedApiTests(unittest.TestCase):
         self.client.__enter__()
         self.addCleanup(self.client.__exit__, None, None, None)
 
-    def test_fresh_database_is_empty_dict(self):
+    def test_fresh_database_is_empty(self):
         # docs/persistence.md: a new database file is seeded with {}
         response = self.client.get("/db/all")
         self.assertEqual(response.status_code, 200)
