@@ -8,7 +8,7 @@ from .exceptions import ResourceNotFoundError, ServiceUnavailableError
 
 logger = logging.getLogger(__name__)
 
-DEFAULT_DB = {"default": "default"}
+DEFAULT_DB = {}
 
 
 class Cache:
