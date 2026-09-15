@@ -54,6 +54,19 @@ class DocumentedApiTests(unittest.TestCase):
         response = self.client.get("/db", params={"key": "does-not-exist"})
         self.assertEqual(response.status_code, 404)
 
+    def test_keys_reflects_default_seed_on_fresh_database(self):
+        response = self.client.get("/db/keys")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json(), ["default"])
+
+    def test_keys_lists_all_stored_keys(self):
+        self.client.put("/db", params={"key": "name", "value": "Alice"})
+        self.client.put("/db", params={"key": "age", "value": "30"})
+
+        response = self.client.get("/db/keys")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(set(response.json()), {"default", "name", "age"})
+
     def test_put_persists_to_db_file_on_disk(self):
         # docs/persistence.md: each PUT writes the complete dictionary back to disk.
         self.client.put("/db", params={"key": "name", "value": "Alice"})

@@ -45,3 +45,19 @@ Alice
 ```
 
 If the requested key does not exist, the API returns a `404` response.
+
+### GET `/db/keys`
+
+Lists all keys currently stored.
+
+For example, if the database contains:
+
+```python
+{"default": "default", "name": "Alice"}
+```
+
+this returns:
+
+```text
+["default", "name"]
+```

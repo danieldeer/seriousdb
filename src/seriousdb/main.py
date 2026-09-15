@@ -39,6 +39,11 @@ def get(key: str, cache: Annotated[Cache, Depends(get_cache)]):
     return cache.select(key)
 
 
+@app.get("/db/keys")
+def keys(cache: Annotated[Cache, Depends(get_cache)]):
+    return cache.keys()
+
+
 @app.delete("/db")
 def delete(key: str, cache: Annotated[Cache, Depends(get_cache)]):
     return cache.delete(key)

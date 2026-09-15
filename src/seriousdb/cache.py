@@ -41,6 +41,16 @@ class Cache:
         return val
 
 
+    def keys(self):
+        with self.lock:
+            if self.db is None:
+                raise HTTPException(
+                    status_code=500,
+                    detail=f"Database file {self.filename} could not be opened and loaded",
+                )
+            return list(self.db.keys())
+
+
     def delete(self, key: str):
         with self.lock:
             if self.db is None:
