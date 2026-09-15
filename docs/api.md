@@ -46,6 +46,21 @@ Alice
 
 If the requested key does not exist, the API returns a `404` response.
 
+### GET `/db/keys`
+
+returns all the keys in the database. It takes no input
+
+For example:
+
+```text
+0	"default"
+1   "Name"
+...
+```
+
+
+If the requested key does not exist, the API returns a `404` response.
+
 ### HEAD `/db`
 
 Checks if the requested key exists in the database.
