@@ -1,10 +1,11 @@
 from contextlib import asynccontextmanager
 from typing import Annotated
 
-from fastapi import BackgroundTasks, Depends, FastAPI
+from fastapi import BackgroundTasks, Depends, FastAPI, Query
 
 from .cache import Cache
 from .config import DB_FILE
+from .schemas import KeyQuery, KeyRequest
 
 cache = Cache()
 
@@ -22,23 +23,22 @@ def get_cache() -> Cache:
     return cache
 
 
-@app.put("/db")
+@app.put("/db", response_model=str)
 def put(
-    key: str,
-    value: str,
+    params: Annotated[KeyRequest, Query()],
     background_tasks: BackgroundTasks,
     cache: Annotated[Cache, Depends(get_cache)],
 ):
-    cache.insert(key, value)
+    cache.insert(params.key, params.value)
     background_tasks.add_task(cache.flush)
-    return value
+    return params.value
 
 
-@app.get("/db")
-def get(key: str, cache: Annotated[Cache, Depends(get_cache)]):
-    return cache.select(key)
+@app.get("/db", response_model=str)
+def get(params: Annotated[KeyQuery, Query()], cache: Annotated[Cache, Depends(get_cache)]):
+    return cache.select(params.key)
 
 
-@app.delete("/db")
-def delete(key: str, cache: Annotated[Cache, Depends(get_cache)]):
-    return cache.delete(key)
+@app.delete("/db", response_model=str)
+def delete(params: Annotated[KeyQuery, Query()], cache: Annotated[Cache, Depends(get_cache)]):
+    return cache.delete(params.key)
