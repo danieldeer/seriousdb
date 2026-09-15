@@ -45,3 +45,17 @@ Alice
 ```
 
 If the requested key does not exist, the API returns a `404` response.
+
+### HEAD `/db`
+
+Checks if the requested key exists in the database.
+
+For example:
+
+```text
+key: name
+```
+
+If the requested key exists, the API returns a `200` response.
+
+If the requested key does not exist, the API returns a `404` response.
