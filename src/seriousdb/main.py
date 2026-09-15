@@ -1,7 +1,7 @@
 from contextlib import asynccontextmanager
 from typing import Annotated
 
-from fastapi import BackgroundTasks, Depends, FastAPI
+from fastapi import BackgroundTasks, Depends, Query, FastAPI
 
 from .cache import Cache
 from .config import DB_FILE
@@ -40,8 +40,12 @@ def get(key: str, cache: Annotated[Cache, Depends(get_cache)]):
 
 
 @app.get("/db/keys")
-def keys(cache: Annotated[Cache, Depends(get_cache)]):
-    return cache.keys()
+def keys(
+        cache: Annotated[Cache, Depends(get_cache)],
+        limit: Annotated[int, Query(ge=1, le=1000)] = 100,
+        offset: Annotated[int, Query(ge=0)] = 0,
+        ):
+    return cache.keys(limit=limit, offset=offset)
 
 
 @app.delete("/db")

@@ -48,7 +48,11 @@ If the requested key does not exist, the API returns a `404` response.
 
 ### GET `/db/keys`
 
-Lists all keys currently stored.
+Lists stored keys, paginated.
+
+Parameters:
+- `limit` - Maximum number of keys to return. Default to `100`, Capped at `1000`.
+- `offset` - Number of keys to skip before collecting results. Default to `0`.
 
 For example, if the database contains:
 
@@ -56,8 +60,22 @@ For example, if the database contains:
 {"default": "default", "name": "Alice"}
 ```
 
-this returns:
+`GET /db/keys`(default params) returns:
 
 ```text
 ["default", "name"]
 ```
+
+`GET /db/keys?limit=1` returns:
+
+```text
+["default"]
+```
+
+`GET /db/keys?offset=1` returns:
+
+```text
+["name"]
+```
+
+NOTE: this endpoint currently has no authentication or authrization, consistent with the rest of the API.Key enumeration is therefore only as safe as the deployment it's runnin in.

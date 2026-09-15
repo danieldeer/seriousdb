@@ -67,6 +67,29 @@ class DocumentedApiTests(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(set(response.json()), {"default", "name", "age"})
 
+    def test_keys_respects_limit_and_offset(self):
+        self.client.put("/db", params={"key": "a", "value": "1"})
+        self.client.put("/db", params={"key": "b", "value": "2"})
+        self.client.put("/db", params={"key": "c", "value": "3"})
+
+        first_page = self.client.get("/db/keys", params={"limit": 2, "offset": 0})
+        second_page = self.client.get("/db/keys", params={"limit": 2, "offset": 2})
+
+        self.assertEqual(first_page.status_code, 200)
+        self.assertEqual(len(first_page.json()), 2)
+        self.assertEqual(second_page.status_code, 200)
+        self.assertEqual(len(second_page.json()), 2)
+        # no overlap between pages
+        self.assertEqual(set(first_page.json()) & set(second_page.json()), set())
+
+    def test_keys_rejects_limit_above_max(self):
+        response = self.client.get("/db/keys", params={"limit": 1001})
+        self.assertEqual(response.status_code, 422)
+
+    def test_keys_rejects_negative_offset(self):
+        response = self.client.get("/db/keys", params={"offset": -1})
+        self.assertEqual(response.status_code, 422)
+
     def test_put_persists_to_db_file_on_disk(self):
         # docs/persistence.md: each PUT writes the complete dictionary back to disk.
         self.client.put("/db", params={"key": "name", "value": "Alice"})
