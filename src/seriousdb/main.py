@@ -57,5 +57,11 @@ def get_all(cache: Annotated[Cache, Depends(get_cache)]) -> dict[str, str]:
 
 
 @app.delete("/db")
-def delete(key: str, cache: Annotated[Cache, Depends(get_cache)]) -> str:
-    return cache.delete(key)
+def delete(
+    key: str,
+    background_tasks: BackgroundTasks,
+    cache: Annotated[Cache, Depends(get_cache)],
+):
+    value = cache.delete(key)
+    background_tasks.add_task(cache.flush)
+    return value

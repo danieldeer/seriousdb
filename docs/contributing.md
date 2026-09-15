@@ -16,3 +16,14 @@ PRs that skip this process may be closed without review.
 
 - Format the Python code — see [Formatting](development.md#formatting).
 - If you add or change an endpoint, update [the API reference](api.md) and verify the behavior via the FastAPI docs at `/docs` or an HTTP client.
+
+Run the same lint and formatting checks used by CI:
+
+```bash
+uv sync --locked
+uv run ruff check .
+uv run ruff format --check .
+```
+
+The `Lint and format` workflow runs on pull requests targeting `main` and pushes to `main`.
+It reports violations without modifying files.
