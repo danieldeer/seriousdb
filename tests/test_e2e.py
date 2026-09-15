@@ -34,7 +34,9 @@ class DocumentedApiTests(unittest.TestCase):
         self.assertEqual(response.json(), "default")
 
     def test_put_stores_value_and_get_retrieves_it(self):
-        put_response = self.client.put("/db", params={"key": "name", "value": "Alice"})
+        put_response = self.client.put(
+            "/db", params={"key": "name"}, json={"value": "Alice"}
+        )
         self.assertEqual(put_response.status_code, 200)
         self.assertEqual(put_response.json(), "Alice")
 
@@ -43,7 +45,9 @@ class DocumentedApiTests(unittest.TestCase):
         self.assertEqual(get_response.json(), "Alice")
 
     def test_put_stores_value_and_head_checks_for_it(self):
-        put_response = self.client.put("/db", params={"key": "name", "value": "Alice"})
+        put_response = self.client.put(
+            "/db", params={"key": "name"}, json={"value": "Alice"}
+        )
         self.assertEqual(put_response.status_code, 200)
         self.assertEqual(put_response.json(), "Alice")
 
@@ -51,8 +55,8 @@ class DocumentedApiTests(unittest.TestCase):
         self.assertEqual(head_response.status_code, 200)
 
     def test_put_overwrites_existing_key(self):
-        self.client.put("/db", params={"key": "name", "value": "Alice"})
-        self.client.put("/db", params={"key": "name", "value": "Bob"})
+        self.client.put("/db", params={"key": "name"}, json={"value": "Alice"})
+        self.client.put("/db", params={"key": "name"}, json={"value": "Bob"})
 
         response = self.client.get("/db", params={"key": "name"})
         self.assertEqual(response.json(), "Bob")
@@ -69,7 +73,7 @@ class DocumentedApiTests(unittest.TestCase):
 
     def test_put_persists_to_db_file_on_disk(self):
         # docs/persistence.md: each PUT writes the complete dictionary back to disk.
-        self.client.put("/db", params={"key": "name", "value": "Alice"})
+        self.client.put("/db", params={"key": "name"}, json={"value": "Alice"})
 
         on_disk = json.loads(Path(main.DB_FILE).read_text())
         self.assertEqual(on_disk["name"], "Alice")

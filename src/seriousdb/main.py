@@ -2,7 +2,7 @@ from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 from typing import Annotated
 
-from fastapi import BackgroundTasks, Depends, FastAPI, HTTPException, Query
+from fastapi import BackgroundTasks, Body, Depends, FastAPI, HTTPException, Query
 
 from .cache import Cache
 from .config import DB_FILE
@@ -26,7 +26,7 @@ def get_cache() -> Cache:
 @app.put("/db")
 def put(
     key: Annotated[str, Query(min_length=1)],
-    value: str,
+    value: Annotated[str, Body(embed=True)],
     background_tasks: BackgroundTasks,
     cache: Annotated[Cache, Depends(get_cache)],
 ) -> str:
