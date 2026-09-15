@@ -1,6 +1,7 @@
 import json
 import logging
 import os
+import tempfile
 import time
 from threading import Lock
 
@@ -75,11 +76,31 @@ class Cache:
         with self.lock:
             if self.db is None or self.filename is None:
                 return
-            with open(self.filename, "wb+") as f:
-                f.write(json.dumps(self.db).encode())
+            _atomic_write(self.filename, json.dumps(self.db).encode())
 
+def _atomic_write(filename: str, data: bytes) -> None:
+    directory = os.path.dirname(os.path.abspath(filename))
+
+    fd, temp_filename = tempfile.mkstemp(
+            dir=directory,
+            prefix=f".{os.path.basename(filename)}.",
+            suffix=".tmp"
+            )
+    try:
+        with os.fdopen(fd, "wb") as f:
+            f.write(data)
+            f.flush()
+            f.fsync(f.fileno())
+
+        os.replace(temp_filename, filename)
+    except Exception:
+        try:
+            os.unlink(temp_filename)
+        except FileNoFoundError:
+            pass
+        raise
 
 def _write_default(filename: str) -> dict[str, str]:
-    with open(filename, "wb") as f:
-        f.write(json.dumps(DEFAULT_DB).encode())
+    data = json.dumps(DEFAULT_DB).encode()
+    _atomic_write(filename, data)
     return dict(DEFAULT_DB)
