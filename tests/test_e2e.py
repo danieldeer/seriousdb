@@ -61,6 +61,46 @@ class DocumentedApiTests(unittest.TestCase):
         on_disk = json.loads(Path(main.DB_FILE).read_text())
         self.assertEqual(on_disk["name"], "Alice")
 
+    def test_delete_key(self):
+        self.client.put("/db", params={"key": "name", "value": "Alice"})
+        response = self.client.delete("/db", params={"key": "name"})
+        self.assertEqual(response.json(), "Alice")
+        self.assertEqual(response.status_code, 200)
+
+    def test_delete_already_deleted_returns_404(self):
+        self.client.put("/db", params={"key": "name", "value": "Alice"})
+        response = self.client.delete("/db", params={"key": "name"})
+
+        self.assertEqual(response.json(), "Alice")
+        self.assertEqual(response.status_code, 200)
+
+        response = self.client.delete("/db", params={"key": "name"})
+        self.assertEqual(response.status_code, 404)
+
+    def test_get_after_delete_return_404(self):
+        self.client.put("/db", params={"key": "name", "value": "Alice"})
+        response = self.client.delete("/db", params={"key": "name", "value": "Alice"})
+        self.assertEqual(response.json(), "Alice")
+        self.assertEqual(response.status_code, 200)
+
+        response = self.client.get("/db", params={"key": "name"})
+        self.assertEqual(response.status_code, 404)
+
+    def test_put_persists_in_db_after_delete(self):
+        self.client.put("/db", params={"key": "name", "value": "Alice"})
+        self.client.delete("/db", params={"key": "name"})
+
+        on_disk = json.loads(Path(main.DB_FILE).read_text())
+        self.assertEqual(on_disk["name"], "Alice")
+
+    def test_put_deleted_from_db_after_delte(self):
+        self.client.put("/db", params={"key": "name", "value": "Alice"})
+        self.client.delete("/db", params={"key": "name"})
+
+        on_disk = json.loads(Path(main.DB_FILE).read_text())
+        self.assertNotIn("name", on_disk)
+
+
 
 if __name__ == "__main__":
     unittest.main()
