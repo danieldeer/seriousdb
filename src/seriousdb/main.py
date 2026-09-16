@@ -2,7 +2,7 @@ from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 from typing import Annotated
 
-from fastapi import BackgroundTasks, Depends, FastAPI, HTTPException, Query
+from fastapi import BackgroundTasks, Depends, FastAPI, HTTPException
 
 from .cache import Cache, require_db
 from .config import DB_FILE
