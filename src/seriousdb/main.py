@@ -31,7 +31,9 @@ def put(
     value: str,
     background_tasks: BackgroundTasks,
     cache: Annotated[Cache, Depends(get_cache)],
-    ttl: float | None = Query(default=None, gt=0, description="Time-to-live in seconds"),
+    ttl: float | None = Query(
+        default=None, gt=0, description="Time-to-live in seconds"
+    ),
 ) -> str:
     cache.insert(key, value, ttl)
     background_tasks.add_task(cache.flush)

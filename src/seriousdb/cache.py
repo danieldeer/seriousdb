@@ -95,9 +95,7 @@ class Cache:
             if self.db is None or self.filename is None:
                 return
             payload = (
-                {"_v": 2, "data": self.db, "ttl": self.ttl}
-                if self.ttl
-                else self.db
+                {"_v": 2, "data": self.db, "ttl": self.ttl} if self.ttl else self.db
             )
             with open(self.filename, "wb+") as f:
                 f.write(json.dumps(payload).encode())

@@ -81,9 +81,7 @@ class TTLTests(unittest.TestCase):
         self.assertEqual(response.status_code, 404)
 
     def test_ttl_rejects_negative_value(self):
-        response = self.client.put(
-            "/db", params={"key": "k", "value": "v", "ttl": -1}
-        )
+        response = self.client.put("/db", params={"key": "k", "value": "v", "ttl": -1})
         self.assertEqual(response.status_code, 422)
 
 
