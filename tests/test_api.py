@@ -279,7 +279,7 @@ def test_bulk_returns_requested_keys(client):
     )
 
     assert response.status_code == 200
-    assert response.json() == {"name": "Alice", "language": "Python"}
+    assert response.json() == {"name": "Daniel", "language": "Python"}
 
 
 def test_bulk_omits_missing_keys(client):
