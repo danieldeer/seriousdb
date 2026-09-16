@@ -5,12 +5,11 @@ body:
   - type: markdown
     attributes:
       value: |
-        Check [existing issues](https://github.com/danieldeer/seriousdb/issues) and
-        [pull requests](https://github.com/danieldeer/seriousdb/pulls) for related work.
+        Check [existing issues](https://github.com/danieldeer/seriousdb/issues) and [pull requests](https://github.com/danieldeer/seriousdb/pulls) for related work.
+
         Focus on the problem and the outcome you need. An implementation plan is not required.
 
-        If you would like to work on a change, follow the
-        [contribution guide](https://github.com/danieldeer/seriousdb/blob/main/docs/contributing.md).
+        If you would like to work on a change, follow the [contribution guide](https://github.com/danieldeer/seriousdb/blob/main/docs/contributing.md).
   - type: textarea
     id: problem
     attributes:
