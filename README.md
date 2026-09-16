@@ -23,6 +23,22 @@ Interactive API documentation is available at:
 - [ReDoc](http://0.0.0.0:8000/redoc)
 - [OpenAPI schema](http://0.0.0.0:8000/openapi.json)
 
+## Configuration
+
+Server configuration is read from environment variables. Copy the example
+file and adjust for local development:
+
+```bash
+cp .env.example .env
+```
+
+The `.env` file is gitignored and should never be committed.
+
+| Variable              | Default | Description                              |
+|-----------------------|---------|------------------------------------------|
+| `SERIOUSDB_DB_FILE`   | `.sdb`  | Path to the on-disk database file.       |
+| `SERIOUSDB_LOG_LEVEL` | `INFO`  | Logging level (DEBUG/INFO/WARNING/ERROR/CRITICAL). |
+
 ## Documentation
 
 - [API reference](docs/api.md)
