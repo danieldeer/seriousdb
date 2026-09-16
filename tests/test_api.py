@@ -79,13 +79,14 @@ def test_get_all_returns_all_values(client):
     }
 
 
-def test_put_empty_key_returns_422(client):
+def test_put_accepts_empty_key(client):
     response = client.put(
         "/db",
         params={"key": "", "value": "test_value"},
     )
 
-    assert response.status_code == 422
+    assert response.status_code == 200
+    assert response.json() == "test_value"
 
 
 def test_put_missing_key_returns_422(client):

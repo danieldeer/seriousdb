@@ -151,7 +151,7 @@ class TestApiErrorResponses:
         assert response.status_code == 422
         assert response.json()["error"] == "request_validation_error"
 
-    def test_rejected_query_parameter_returns_a_structured_422(self, client):
+    def test_empty_put_key_is_accepted(self, client):
         response = client.put("/db", params={"key": "", "value": "Alice"})
-        assert response.status_code == 422
-        assert response.json()["error"] == "request_validation_error"
+        assert response.status_code == 200
+        assert response.json() == "Alice"

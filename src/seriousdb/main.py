@@ -27,7 +27,7 @@ def get_cache() -> Cache:
 
 @app.put("/db")
 def put(
-    key: Annotated[str, Query(min_length=1)],
+    key: str,
     value: str,
     background_tasks: BackgroundTasks,
     cache: Annotated[Cache, Depends(get_cache)],
