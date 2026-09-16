@@ -12,7 +12,7 @@ def client(tmp_path, monkeypatch):
     db_file = tmp_path / ".sdb"
 
     with open(db_file, "w") as f:
-        json.dump({"default": "default"}, f)
+        json.dump({}, f)
 
     monkeypatch.setattr(main, "DB_FILE", str(db_file))
 
@@ -73,7 +73,6 @@ def test_get_all_returns_all_values(client):
 
     assert response.status_code == 200
     assert response.json() == {
-        "default": "default",
         "name": "Alice",
         "language": "Python",
     }
