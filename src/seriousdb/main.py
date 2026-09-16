@@ -139,7 +139,23 @@ def get_all(cache: Annotated[Cache, Depends(get_cache)]) -> dict[str, str]:
         return require_db(cache).copy()
 
 
-@app.get("/db/bulk")
+@app.get(
+    "/db/bulk",
+    summary="Get multiple key-value pairs",
+    description=cleandoc(
+        """
+        Returns the values stored in the database under multiple requested keys.
+
+        Keys that do not exist are omitted from the response.
+        The response contains a key-value pair for each requested key that exists in the database.
+        """
+    ),
+    response_description="The requested key-value pairs requested.",
+    responses={
+        422: {"description": "Some or all the requested values are not found in the database."},
+        503: {"description": "The database file could not be opened and loaded."},
+    },
+)
 def get_bulk(key: Annotated[list[str], Query()], cache: Annotated[Cache, Depends(get_cache)]) -> dict[str, str]:
     with cache.lock:
         db = require_db(cache).copy()
