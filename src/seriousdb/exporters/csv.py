@@ -7,6 +7,7 @@ from pathlib import Path
 def export(
     db: dict[str, str],
     filename: str | Path,
+    table_name: str = "seriousdb_kv",
 ) -> None:
     """Export a key-value database to a CSV file."""
     filename = Path(filename)
