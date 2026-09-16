@@ -6,7 +6,7 @@ The application is currently intentionally small:
 - The database is represented as a Python dictionary in memory while a request is handled.
 - The dictionary is loaded from and written to the local `.sdb` file.
 
-The service starts with a default entry when `.sdb` does not exist. There is no separate database process or client library.
+The service starts with zero entries when `.sdb` does not exist. There is no separate database process or client library.
 
 ## Request flow
 
