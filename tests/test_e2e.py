@@ -108,7 +108,7 @@ class DocumentedApiTests(unittest.TestCase):
 
         response = self.client.get(
             "/db/bulk",
-            params=[("key": "name"), ("key", "language")],
+            params=[("key", "name"), ("key", "language")],
         )
 
         self.assertEqual(response.status_code, 200)

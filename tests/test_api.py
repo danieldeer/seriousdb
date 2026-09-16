@@ -275,7 +275,7 @@ def test_bulk_returns_requested_keys(client):
 
     response = client.get(
         "/db/bulk",
-        params=[("key", "name"), ("key": "language")],
+        params=[("key", "name"), ("key", "language")],
     )
 
     assert response.status_code == 200
