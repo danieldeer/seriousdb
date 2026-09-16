@@ -246,3 +246,54 @@ def test_count_is_zero_after_removing_default_key(client):
 
     assert response.status_code == 200
     assert response.json() == 0
+
+
+def test_bulk_returns_requested_keys(client):
+    client.put(
+        "/db",
+        params={"key": "name", "value": "Daniel"},
+    )
+
+    client.put(
+        "/db",
+        params={"key": "language", "value": "Python"},
+    )
+
+    response = client.get(
+        "/db/bulk",
+        params=[("key", "name"), ("key": "language")],
+    )
+
+    assert response.status_code == 200
+    assert response.json() == {"name": "Alice", "language": "Python"}
+
+
+def test_bulk_omits_missing_keys(client):
+    client.put(
+        "/db",
+        params={"key": "name", "value": "Daniel"},
+    )
+
+    response = client.get(
+        "db/bulk",
+        params=[("key", "name"), ("key", "does_not_exist")],
+    )
+
+    assert response.status_code == 200
+    assert response.json() == {"name": "Daniel"}
+
+
+def test_bulk_returns_empty_object_when_no_keys_match(client):
+    response = client.get(
+        "/db/bulk",
+        params=[("key", "does_not_exist")],
+    )
+
+    assert response.status_code == 200
+    assert response.json() == {}
+
+
+def test_bulk_missing_key_parameter_returns_422(client):
+    response = client.get("/db/bulk")
+
+    assert response.status_code == 422

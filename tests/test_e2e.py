@@ -97,6 +97,18 @@ class DocumentedApiTests(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json(), 3)
 
+    def test_bulk_returns_requested_keys(self):
+        self.client.put("/db", params={"key": "name", "value": "Daniel"})
+        self.client.put("/db", params={"key": "language", "value": "Python"})
+
+        response = self.client.get(
+            "/db/bulk",
+            params=[("key": "name"), ("key", "language")],
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json(), {"name": "Daniel", "language": "Python"})
+
 
 if __name__ == "__main__":
     unittest.main()

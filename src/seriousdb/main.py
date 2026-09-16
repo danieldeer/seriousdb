@@ -55,6 +55,12 @@ def get_all(cache: Annotated[Cache, Depends(get_cache)]) -> dict[str, str]:
         return require_db(cache).copy()
 
 
+@app.get("/db/bulk")
+def get_bulk(key: Annotated[list[str], Query()], cache: Annotated[Cache, Depends(get_cache)]) -> dict[str, str]:
+    with cache.lock:
+        db = require_db(cache).copy()
+        return {k: db[k] for k in key if k in db}
+
 @app.get("/db/count")
 def count(cache: Annotated[Cache, Depends(get_cache)]):
     with cache.lock:

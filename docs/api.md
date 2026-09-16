@@ -78,6 +78,27 @@ If the requested key exists, the API returns a `200` response.
 
 If the requested key does not exist, the API returns a `404` response.
 
+### GET `/db/bulk`
+
+Retrieves the values for multiple keys in a single request.
+
+For example:
+
+```text
+GET /db/bulk?key=name&key=language
+```
+
+returns:
+
+```json
+{
+  "name": "Daniel",
+  "language": "Python"
+}
+```
+
+Keys that do not exist in the database are omitted from response. If no `key` parameter is provided, the API returns a `422` response.
+
 ### GET `/db/all`
 
 Retrieves all key-value pairs currently stored in the database.
