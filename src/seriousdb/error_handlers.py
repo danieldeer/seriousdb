@@ -28,7 +28,24 @@ def error_response(
     error_code: str,
     headers: dict[str, str] | None = None,
 ) -> JSONResponse:
-    """Build an error response in the application's standard structure."""
+    """Build an error response in the application's standard structure.
+
+    Parameters
+    ----------
+    status_code : int
+        HTTP status code of the response.
+    detail : Any
+        Human readable description of the error. Must be JSON serializable.
+    error_code : str
+        Machine readable error code.
+    headers : dict of str to str, optional
+        Extra headers to send with the response.
+
+    Returns
+    -------
+    JSONResponse
+        Response with the body ``{"detail": detail, "error": error_code}``.
+    """
     return JSONResponse(
         status_code=status_code,
         content={"detail": detail, "error": error_code},
@@ -39,13 +56,43 @@ def error_response(
 async def handle_application_error(
     request: Request, exc: ApplicationError
 ) -> JSONResponse:
+    """Translate an :class:`ApplicationError` into its error response.
+
+    Parameters
+    ----------
+    request : Request
+        The request that raised the error.
+    exc : ApplicationError
+        The raised error.
+
+    Returns
+    -------
+    JSONResponse
+        Response with the status code, detail and error code of `exc`.
+    """
     return error_response(exc.status_code, exc.detail, exc.error_code)
 
 
 async def handle_http_exception(
     request: Request, exc: StarletteHTTPException
 ) -> JSONResponse:
-    """Keep responses consistent for HTTP errors raised by FastAPI itself."""
+    """Keep responses consistent for HTTP errors raised by FastAPI itself.
+
+    The error code is the lowercase name of the status code, for example
+    ``not_found``, or ``http_error`` for non-standard status codes.
+
+    Parameters
+    ----------
+    request : Request
+        The request that raised the error.
+    exc : starlette.exceptions.HTTPException
+        The raised error.
+
+    Returns
+    -------
+    JSONResponse
+        Response with the status code, detail and headers of `exc`.
+    """
     try:
         error_code = HTTPStatus(exc.status_code).name.lower()
     except ValueError:
@@ -61,6 +108,21 @@ async def handle_http_exception(
 async def handle_request_validation_error(
     request: Request, exc: RequestValidationError
 ) -> JSONResponse:
+    """Translate invalid request parameters into a ``422`` response.
+
+    Parameters
+    ----------
+    request : Request
+        The request that failed validation.
+    exc : RequestValidationError
+        The validation error.
+
+    Returns
+    -------
+    JSONResponse
+        ``422`` response with error code ``request_validation_error`` and the
+        list of validation problems as detail.
+    """
     return error_response(
         HTTPStatus.UNPROCESSABLE_ENTITY,
         exc.errors(),
@@ -69,6 +131,22 @@ async def handle_request_validation_error(
 
 
 async def handle_unexpected_error(request: Request, exc: Exception) -> JSONResponse:
+    """Report an unexpected error as a generic ``500`` response.
+
+    No information about `exc` is included in the response.
+
+    Parameters
+    ----------
+    request : Request
+        The request that raised the error.
+    exc : Exception
+        The raised error.
+
+    Returns
+    -------
+    JSONResponse
+        ``500`` response with error code ``internal_server_error``.
+    """
     return error_response(
         HTTPStatus.INTERNAL_SERVER_ERROR,
         INTERNAL_ERROR_DETAIL,
@@ -77,8 +155,14 @@ async def handle_unexpected_error(request: Request, exc: Exception) -> JSONRespo
 
 
 def register_exception_handlers(app: FastAPI) -> None:
-    """Register the centralized handlers on a FastAPI application."""
-    app.add_exception_handler(ApplicationError, handle_application_error)
-    app.add_exception_handler(StarletteHTTPException, handle_http_exception)
-    app.add_exception_handler(RequestValidationError, handle_request_validation_error)
+    """Register the centralized handlers on a FastAPI application.
+
+    Parameters
+    ----------
+    app : FastAPI
+        Application to register the handlers on. It is modified in place.
+    """
+    app.exception_handler(ApplicationError)(handle_application_error)
+    app.exception_handler(StarletteHTTPException)(handle_http_exception)
+    app.exception_handler(RequestValidationError)(handle_request_validation_error)
     app.add_exception_handler(Exception, handle_unexpected_error)

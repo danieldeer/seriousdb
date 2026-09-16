@@ -12,7 +12,7 @@ def client(tmp_path, monkeypatch):
     db_file = tmp_path / ".sdb"
 
     with open(db_file, "w") as f:
-        json.dump({"default": "default"}, f)
+        json.dump({}, f)
 
     monkeypatch.setattr(main, "DB_FILE", str(db_file))
 
@@ -27,7 +27,7 @@ def test_put_stores_value(client):
         json={"value": "test_value"},
     )
 
-    assert response.status_code == 200
+    assert response.status_code == 201
     assert response.json() == "test_value"
 
 
@@ -77,7 +77,6 @@ def test_get_all_returns_all_values(client):
 
     assert response.status_code == 200
     assert response.json() == {
-        "default": "default",
         "name": "Alice",
         "language": "Python",
     }
@@ -137,11 +136,13 @@ def test_delete_missing_key_parameter_returns_422(client):
 
 
 def test_put_updates_existing_key(client):
-    client.put(
+    response = client.put(
         "/db",
         params={"key": "name"},
         json={"value": "Alice"},
     )
+    assert response.status_code == 201
+    assert response.json() == "Alice"
 
     response = client.put(
         "/db",
@@ -173,7 +174,7 @@ def test_concurrent_put_requests(client):
     with ThreadPoolExecutor(max_workers=10) as executor:
         responses = list(executor.map(put_value, range(10)))
 
-    assert all(response.status_code == 200 for response in responses)
+    assert all(response.status_code == 201 for response in responses)
 
     response = client.get("/db/all")
 
@@ -214,7 +215,7 @@ def test_concurrent_put_and_delete_requests(client):
         put_responses = [future.result() for future in put_futures]
 
     assert all(response.status_code == 200 for response in delete_responses)
-    assert all(response.status_code == 200 for response in put_responses)
+    assert all(response.status_code == 201 for response in put_responses)
 
     response = client.get("/db/all")
 
@@ -225,3 +226,54 @@ def test_concurrent_put_and_delete_requests(client):
     for number in range(10):
         assert f"delete_{number}" not in db
         assert db[f"put_{number}"] == f"value_{number}"
+
+
+def test_count_returns_number_of_key_value_pairs(client):
+    client.put(
+        "/db",
+        params={"key": "name"},
+        json={"value": "Alice"},
+    )
+
+    client.put(
+        "/db",
+        params={"key": "language"},
+        json={"value": "Python"},
+    )
+
+    response = client.get("/db/count")
+
+    assert response.status_code == 200
+    assert response.json() == 2
+
+
+def test_count_return_zero_on_empty_db(client):
+    response = client.get("/db/count")
+
+    assert response.status_code == 200
+    assert response.json() == 0
+
+
+def test_count_decreases_after_deleting_key(client):
+    client.put(
+        "/db",
+        params={"key": "name"},
+        json={"value": "Alice"},
+    )
+
+    response = client.get("/db/count")
+
+    assert response.status_code == 200
+    assert response.json() == 1
+
+    response = client.delete(
+        "/db",
+        params={"key": "name"},
+    )
+
+    assert response.status_code == 200
+
+    response = client.get("/db/count")
+
+    assert response.status_code == 200
+    assert response.json() == 0

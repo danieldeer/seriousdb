@@ -15,6 +15,7 @@ PRs that skip this process may be closed without review.
 ## Before opening a PR
 
 - Format the Python code — see [Formatting](development.md#formatting).
+- Follow the [docstring conventions](development.md#docstrings).
 - If you add or change an endpoint, update [the API reference](api.md) and verify the behavior via the FastAPI docs at `/docs` or an HTTP client.
 
 Run the same lint and formatting checks used by CI:
