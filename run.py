@@ -1,3 +1,5 @@
+"""Start the development server with auto-reload on port 8000."""
+
 import uvicorn
 
 if __name__ == "__main__":

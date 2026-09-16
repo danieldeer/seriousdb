@@ -26,3 +26,21 @@ where = ["src"]
 
 [tool.pytest.ini_options]
 pythonpath = ["src"]
+
+# ------------------------------------------------------------------------------
+# Ruff
+# ------------------------------------------------------------------------------
+
+[tool.ruff.lint]
+extend-select = ["D"]
+
+[tool.ruff.lint.pydocstyle]
+convention = "numpy"
+
+[tool.ruff.lint.per-file-ignores]
+# Endpoints are documented through their decorator metadata instead.
+"src/seriousdb/main.py" = ["D100", "D103"]
+"tests/**" = ["D"]
+
+[tool.ruff.format]
+docstring-code-format = true
