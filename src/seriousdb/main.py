@@ -45,8 +45,10 @@ def get_cache() -> Cache:
     },
 )
 def put(
-    key: Annotated[str, Query(min_length=1)],
-    value: str,
+    key: Annotated[
+        str, Query(min_length=1, description="The key to store the value under.")
+    ],
+    value: Annotated[str, Query(description="The value to store.")],
     background_tasks: BackgroundTasks,
     cache: Annotated[Cache, Depends(get_cache)],
 ) -> str:
@@ -69,7 +71,10 @@ def put(
         503: {"description": "The database file could not be opened and loaded."},
     },
 )
-def get(key: str, cache: Annotated[Cache, Depends(get_cache)]) -> str:
+def get(
+    key: Annotated[str, Query(description="The key to look up.")],
+    cache: Annotated[Cache, Depends(get_cache)],
+) -> str:
     return cache.select(key)
 
 
@@ -92,7 +97,10 @@ def get(key: str, cache: Annotated[Cache, Depends(get_cache)]) -> str:
         503: {"description": "The database file could not be opened and loaded."},
     },
 )
-async def head(key: str, cache: Annotated[Cache, Depends(get_cache)]) -> str:
+async def head(
+    key: Annotated[str, Query(description="The key to check.")],
+    cache: Annotated[Cache, Depends(get_cache)],
+) -> str:
     return cache.select(key)
 
 
@@ -152,7 +160,7 @@ def count(cache: Annotated[Cache, Depends(get_cache)]):
     },
 )
 def delete(
-    key: str,
+    key: Annotated[str, Query(description="The key to remove.")],
     background_tasks: BackgroundTasks,
     cache: Annotated[Cache, Depends(get_cache)],
 ) -> str:
