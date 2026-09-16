@@ -13,7 +13,22 @@ class Cache:
     def __init__(self):
         self.filename = None
         self.db = None
+        self.ttl = {}
         self.lock = Lock()
+
+
+def is_expired(key: str, cache: Cache) -> bool:
+    expires_at = cache.ttl.get(key)
+    return expires_at is not None and time.time() >= expires_at
+
+
+def cleanup_expired(cache: Cache) -> list[str]:
+    now = time.time()
+    expired = [k for k, exp in cache.ttl.items() if now >= exp]
+    for k in expired:
+        cache.db.pop(k, None)
+        del cache.ttl[k]
+    return expired
 
 
 def _write_default(filename: str) -> dict:
@@ -24,12 +39,18 @@ def _write_default(filename: str) -> dict:
 
 def load(filename: str, cache: Cache):
     with cache.lock:
+        cache.ttl = {}
         if not os.path.isfile(filename):
             cache.db = _write_default(filename)
         else:
             try:
                 with open(filename, "rb") as f:
-                    cache.db = json.loads(f.read().decode())
+                    raw = json.loads(f.read().decode())
+                if isinstance(raw, dict) and "_v" in raw:
+                    cache.db = raw["data"]
+                    cache.ttl = raw.get("ttl", {})
+                else:
+                    cache.db = raw
             except (json.JSONDecodeError, UnicodeDecodeError) as e:
                 backup = f"{filename}.corrupt-{int(time.time())}"
                 os.replace(filename, backup)
@@ -47,5 +68,10 @@ def flush(cache: Cache):
     with cache.lock:
         if cache.db is None:
             return
+        payload = (
+            {"_v": 2, "data": cache.db, "ttl": cache.ttl}
+            if cache.ttl
+            else cache.db
+        )
         with open(cache.filename, "wb+") as f:
-            f.write(json.dumps(cache.db).encode())
+            f.write(json.dumps(payload).encode())
