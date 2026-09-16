@@ -7,7 +7,7 @@ The project uses `pytest` for automated testing and FastAPI's `TestClient` for A
 Run the full test suite with:
 
 ```bash
-pytest
+uv run pytest
 ```
 
 The test suite covers:
