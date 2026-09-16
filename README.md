@@ -15,7 +15,13 @@ uv sync
 uv run run.py
 ```
 
-The server is available at `http://0.0.0.0:8000`.
+By default, the server is available at `http://0.0.0.0:8000`.
+
+You can change the default port (8000) by using the `-p` or `--port` flag.
+
+```bash
+uv run run.py --port 8001
+```
 
 Interactive API documentation is available at:
 
