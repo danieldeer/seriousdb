@@ -161,7 +161,20 @@ def get_bulk(key: Annotated[list[str], Query()], cache: Annotated[Cache, Depends
         db = require_db(cache).copy()
         return {k: db[k] for k in key if k in db}
 
-@app.get("/db/count")
+
+@app.get(
+    "/db/count",
+    summary="Count the stored keys",
+    description=cleandoc(
+        """
+        Returns the number of key-value pairs in the database.
+        """
+    ),
+    response_description="The number of stored key-value pairs.",
+    responses={
+        503: {"description": "The database file could not be opened and loaded."}
+    },
+)
 def count(cache: Annotated[Cache, Depends(get_cache)]):
     with cache.lock:
         return len(require_db(cache).copy())
