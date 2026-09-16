@@ -15,7 +15,7 @@ from .exceptions import ResourceNotFoundError, ServiceUnavailableError
 
 logger = logging.getLogger(__name__)
 
-DEFAULT_DB = {"default": "default"}
+DEFAULT_DB = {}
 
 
 class Cache:
@@ -40,7 +40,7 @@ class Cache:
         self.db: dict[str, str] | None = None
         self.lock = Lock()
 
-    def insert(self, key: str, value: str) -> str:
+    def insert(self, key: str, value: str) -> tuple[str, bool]:
         """Store `value` under `key`, replacing any existing value.
 
         The change is only kept in memory; call :meth:`flush` to persist it.
@@ -54,8 +54,11 @@ class Cache:
 
         Returns
         -------
-        str
+        value : str
             The stored value.
+        is_new_key : bool
+            ``True`` if `key` did not exist before, ``False`` if an existing
+            value was replaced.
 
         Raises
         ------
@@ -63,8 +66,10 @@ class Cache:
             If no database has been loaded.
         """
         with self.lock:
-            require_db(self)[key] = value
-        return value
+            db = require_db(self)
+            is_new_key = key not in db
+            db[key] = value
+        return value, is_new_key
 
     def select(self, key: str) -> str:
         """Return the value stored under `key`.
@@ -123,10 +128,10 @@ class Cache:
     def load(self, filename: str) -> None:
         """Load the database from `filename`, replacing the current data.
 
-        If the file does not exist, it is created with the default database.
+        If the file does not exist, it is created with an empty database.
         If it is not valid UTF-8 JSON or does not contain a JSON object, it is
         renamed to ``<filename>.corrupt-<unix timestamp>``, a warning is
-        logged, and a new file with the default database is created in its
+        logged, and a new file with an empty database is created in its
         place.
 
         Parameters

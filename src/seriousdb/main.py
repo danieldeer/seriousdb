@@ -4,7 +4,15 @@ from contextlib import asynccontextmanager
 from inspect import cleandoc
 from typing import Annotated
 
-from fastapi import BackgroundTasks, Depends, FastAPI, HTTPException, Query
+from fastapi import (
+    BackgroundTasks,
+    Depends,
+    FastAPI,
+    HTTPException,
+    Query,
+    Response,
+    status,
+)
 
 from .cache import Cache, require_db
 from .config import DB_FILE, LOG_LEVEL
@@ -35,13 +43,20 @@ def get_cache() -> Cache:
         """
         Stores `value` under `key`, overwriting any existing value.
 
+        - `201` if `key` did not exist yet
+        - `200` if an existing value was overwritten
+
         The database file is updated in the background, so the change is
         persisted shortly after the response is sent.
         """
     ),
-    response_description="The stored value.",
+    response_description="The existing value was overwritten. Returns the stored value.",
     responses={
-        503: {"description": "The database file could not be opened and loaded."}
+        201: {
+            "description": "The key was created. Returns the stored value.",
+            "model": str,
+        },
+        503: {"description": "The database file could not be opened and loaded."},
     },
 )
 def put(
@@ -51,8 +66,10 @@ def put(
     value: Annotated[str, Query(description="The value to store.")],
     background_tasks: BackgroundTasks,
     cache: Annotated[Cache, Depends(get_cache)],
+    response: Response,
 ) -> str:
-    cache.insert(key, value)
+    value, is_new_key = cache.insert(key, value)
+    response.status_code = status.HTTP_201_CREATED if is_new_key else status.HTTP_200_OK
     background_tasks.add_task(cache.flush)
     return value
 
