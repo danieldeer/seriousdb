@@ -128,8 +128,6 @@ def get_all(cache: Annotated[Cache, Depends(get_cache)]) -> dict[str, str]:
     description=cleandoc(
         """
         Returns the number of key-value pairs in the database.
-
-        > **Note:** The count includes the `default` key if it is present.
         """
     ),
     response_description="The number of stored key-value pairs.",
