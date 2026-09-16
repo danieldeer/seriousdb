@@ -152,11 +152,15 @@ def get_all(cache: Annotated[Cache, Depends(get_cache)]) -> dict[str, str]:
     ),
     response_description="The requested key-value pairs requested.",
     responses={
-        422: {"description": "Some or all the requested values are not found in the database."},
+        422: {
+            "description": "Some or all the requested values are not found in the database."
+        },
         503: {"description": "The database file could not be opened and loaded."},
     },
 )
-def get_bulk(key: Annotated[list[str], Query()], cache: Annotated[Cache, Depends(get_cache)]) -> dict[str, str]:
+def get_bulk(
+    key: Annotated[list[str], Query()], cache: Annotated[Cache, Depends(get_cache)]
+) -> dict[str, str]:
     with cache.lock:
         db = require_db(cache).copy()
         return {k: db[k] for k in key if k in db}
