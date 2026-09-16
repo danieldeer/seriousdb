@@ -1,0 +1,52 @@
+name: Bug report
+description: Report a problem with seriousdb.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Check [existing issues](https://github.com/danieldeer/seriousdb/issues) and [pull requests](https://github.com/danieldeer/seriousdb/pulls) for related work.
+
+        Describe the problem below. You do not need to know how to fix it.
+
+        If you would like to work on a fix, follow the [contribution guide](https://github.com/danieldeer/seriousdb/blob/main/docs/contributing.md).
+  - type: textarea
+    id: actual-behavior
+    attributes:
+      label: What happened?
+      description: Describe the behavior you observed, including any error messages.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps to reproduce
+      description: Include the startup command and requests or actions that trigger the problem. If it is intermittent, describe what you know so far.
+      placeholder: |
+        1. Start seriousdb with ...
+        2. Send the request ...
+        3. Observe ...
+    validations:
+      required: true
+  - type: textarea
+    id: expected-behavior
+    attributes:
+      label: What did you expect?
+      description: Describe the result you expected from those steps.
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: Include the details you know about the affected setup.
+      placeholder: |
+        seriousdb version or commit:
+        Python version:
+        Operating system:
+        Installation method (uv, Docker, Nix, or other):
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional context
+      description: Add relevant logs, screenshots, or links to related issues and pull requests.

@@ -1,22 +1,24 @@
+from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 from typing import Annotated
 
 from fastapi import BackgroundTasks, Depends, FastAPI, Query
 
-from .cache import Cache, flush, load
+from .cache import Cache, require_db
 from .config import DB_FILE
-from .db import delete, insert, select
+from .error_handlers import register_exception_handlers
 
 cache = Cache()
 
 
 @asynccontextmanager
-async def lifespan(app: FastAPI):
-    load(DB_FILE, cache)
+async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
+    cache.load(DB_FILE)
     yield
 
 
 app = FastAPI(lifespan=lifespan)
+register_exception_handlers(app)
 
 
 def get_cache() -> Cache:
@@ -25,28 +27,48 @@ def get_cache() -> Cache:
 
 @app.put("/db")
 def put(
-    key: str,
+    key: Annotated[str, Query(min_length=1)],
     value: str,
     background_tasks: BackgroundTasks,
     cache: Annotated[Cache, Depends(get_cache)],
     ttl: float | None = Query(default=None, gt=0, description="Time-to-live in seconds"),
-):
-    insert(key, value, cache, ttl)
-    background_tasks.add_task(flush, cache)
+) -> str:
+    cache.insert(key, value, ttl)
+    background_tasks.add_task(cache.flush)
     return value
 
 
 @app.get("/db")
-def get(key: str, cache: Annotated[Cache, Depends(get_cache)]):
-    return select(key, cache)
+def get(key: str, cache: Annotated[Cache, Depends(get_cache)]) -> str:
+    return cache.select(key)
+
+
+@app.head("/db")
+async def head(key: str, cache: Annotated[Cache, Depends(get_cache)]) -> str:
+    return cache.select(key)
+
+
+@app.get("/db/all")
+def get_all(cache: Annotated[Cache, Depends(get_cache)]) -> dict[str, str]:
+    with cache.lock:
+        return require_db(cache).copy()
 
 
 @app.delete("/db")
-def remove(
+def delete(
     key: str,
     background_tasks: BackgroundTasks,
     cache: Annotated[Cache, Depends(get_cache)],
-):
-    delete(key, cache)
-    background_tasks.add_task(flush, cache)
-    return {"deleted": key}
+) -> str:
+    value = cache.delete(key)
+    background_tasks.add_task(cache.flush)
+    return value
+
+
+@app.get("/health")
+def health(cache: Annotated[Cache, Depends(get_cache)]):
+    if cache.db is None:
+        from fastapi import HTTPException
+
+        raise HTTPException(status_code=503, detail="Service unavailable")
+    return {"status": "ok"}

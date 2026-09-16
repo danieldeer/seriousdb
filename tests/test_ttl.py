@@ -76,13 +76,9 @@ class TTLTests(unittest.TestCase):
         self.client.put("/db", params={"key": "k", "value": "v"})
         response = self.client.delete("/db", params={"key": "k"})
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.json(), {"deleted": "k"})
+        self.assertEqual(response.json(), "v")
         response = self.client.get("/db", params={"key": "k"})
         self.assertEqual(response.status_code, 404)
-
-    def test_delete_nonexistent_key_is_idempotent(self):
-        response = self.client.delete("/db", params={"key": "nope"})
-        self.assertEqual(response.status_code, 200)
 
     def test_ttl_rejects_negative_value(self):
         response = self.client.put(
@@ -96,25 +92,25 @@ class CacheUnitTests(unittest.TestCase):
         c = cache.Cache()
         c.db = {"k": "v"}
         c.ttl = {}
-        self.assertFalse(cache.is_expired("k", c))
+        self.assertFalse(c._is_expired("k"))
 
     def test_is_expired_true_when_past(self):
         c = cache.Cache()
         c.db = {"k": "v"}
         c.ttl = {"k": time.time() - 1}
-        self.assertTrue(cache.is_expired("k", c))
+        self.assertTrue(c._is_expired("k"))
 
     def test_is_expired_false_when_future(self):
         c = cache.Cache()
         c.db = {"k": "v"}
         c.ttl = {"k": time.time() + 999}
-        self.assertFalse(cache.is_expired("k", c))
+        self.assertFalse(c._is_expired("k"))
 
     def test_cleanup_expired_removes_keys(self):
         c = cache.Cache()
         c.db = {"a": "1", "b": "2"}
         c.ttl = {"a": time.time() - 1, "b": time.time() + 999}
-        expired = cache.cleanup_expired(c)
+        expired = c.cleanup_expired()
         self.assertEqual(expired, ["a"])
         self.assertNotIn("a", c.db)
         self.assertIn("b", c.db)
@@ -125,7 +121,7 @@ class CacheUnitTests(unittest.TestCase):
             with open(db_file, "w") as f:
                 json.dump({"default": "default"}, f)
             c = cache.Cache()
-            cache.load(db_file, c)
+            c.load(db_file)
             self.assertEqual(c.db, {"default": "default"})
             self.assertEqual(c.ttl, {})
 
@@ -135,7 +131,7 @@ class CacheUnitTests(unittest.TestCase):
             with open(db_file, "w") as f:
                 json.dump({"_v": 2, "data": {"k": "v"}, "ttl": {"k": 99999}}, f)
             c = cache.Cache()
-            cache.load(db_file, c)
+            c.load(db_file)
             self.assertEqual(c.db, {"k": "v"})
             self.assertEqual(c.ttl, {"k": 99999})
 
@@ -146,7 +142,7 @@ class CacheUnitTests(unittest.TestCase):
             c.filename = db_file
             c.db = {"k": "v"}
             c.ttl = {}
-            cache.flush(c)
+            c.flush()
             on_disk = json.loads(Path(db_file).read_text())
             self.assertNotIn("_v", on_disk)
             self.assertEqual(on_disk["k"], "v")
@@ -158,7 +154,7 @@ class CacheUnitTests(unittest.TestCase):
             c.filename = db_file
             c.db = {"k": "v"}
             c.ttl = {"k": 12345}
-            cache.flush(c)
+            c.flush()
             on_disk = json.loads(Path(db_file).read_text())
             self.assertEqual(on_disk["_v"], 2)
             self.assertEqual(on_disk["data"], {"k": "v"})
