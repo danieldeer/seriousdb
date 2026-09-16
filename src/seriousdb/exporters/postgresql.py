@@ -1,17 +1,22 @@
+"""PostgreSQL export support."""
+
 from pathlib import Path
 
 
 def _pg_string(value: str) -> str:
+    """Escape a string for use as a PostgreSQL string literal."""
     return "'" + value.replace("'", "''") + "'"
 
 
 def _pg_identifier(value: str) -> str:
+    """Quote a PostgreSQL identifier."""
     return '"' + value.replace('"', '""') + '"'
 
 
 def export(
     db: dict[str, str], filename: str | Path, table_name: str = "seriousdb_kv"
 ) -> None:
+    """Export a key-value database to a PostgreSQL SQL file."""
     filename = Path(filename)
     table = _pg_identifier(table_name)
 

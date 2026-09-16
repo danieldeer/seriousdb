@@ -1,17 +1,22 @@
+"""MySQL export support."""
+
 from pathlib import Path
 
 
 def _mysql_string(value: str) -> str:
+    """Escape a string for use as a MySQL string literal."""
     return "'" + value.replace("\\", "\\\\").replace("'", "''") + "'"
 
 
 def _mysql_identifier(value: str) -> str:
+    """Quote a MySQL identifier."""
     return "`" + value.replace("`", "``") + "`"
 
 
 def export(
     db: dict[str, str], filename: str | Path, table_name: str = "seriousdb_kv"
 ) -> None:
+    """Export a key-value database to a MySQL SQL file."""
     filename = Path(filename)
     table = _mysql_identifier(table_name)
 

@@ -1,3 +1,5 @@
+"""Command-line interface for exporting seriousdb databases."""
+
 import argparse
 from pathlib import Path
 
@@ -24,6 +26,7 @@ SQL_EXPORTERS = {
 
 
 def main() -> None:
+    """Parse arguments and export a seriousdb database."""
     parser = argparse.ArgumentParser(description="Export a seriousdb database.")
 
     parser.add_argument(

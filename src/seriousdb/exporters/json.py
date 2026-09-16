@@ -1,3 +1,5 @@
+"""JSON export support."""
+
 import json
 from pathlib import Path
 
@@ -6,6 +8,7 @@ def export(
     db: dict[str, str],
     filename: str | Path,
 ) -> None:
+    """Export a key-value database to a JSON file."""
     filename = Path(filename)
 
     with filename.open("w", encoding="utf-8") as f:

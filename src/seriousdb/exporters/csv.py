@@ -1,3 +1,5 @@
+"""CSV export support."""
+
 import csv
 from pathlib import Path
 
@@ -6,6 +8,7 @@ def export(
     db: dict[str, str],
     filename: str | Path,
 ) -> None:
+    """Export a key-value database to a CSV file."""
     filename = Path(filename)
 
     with filename.open("w", encoding="utf-8", newline="") as f:
