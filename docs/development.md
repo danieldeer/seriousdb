@@ -98,3 +98,18 @@ uv run ruff check --fix .
 ```bash
 ruff check --fix .
 ```
+
+## Docstrings
+
+Python docstrings follow the [NumPy style](https://numpydoc.readthedocs.io/en/latest/format.html).
+See [`cache.py`](../src/seriousdb/cache.py) for examples.
+
+Docstrings are required for public functions, classes and modules only; for private ones (prefixed with `_`) they are optional.
+This is enforced by `ruff` (see [Linting](#linting)).
+
+### Endpoints
+
+Don't write docstrings for FastAPI endpoints. Document them through the route
+decorator instead (`summary=`, `description=`, `response_description=`,
+`responses=`), so the text shows up in the OpenAPI docs at `/docs`.
+See [`main.py`](../src/seriousdb/main.py) for examples.
