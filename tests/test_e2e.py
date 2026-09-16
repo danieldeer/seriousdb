@@ -95,7 +95,7 @@ class DocumentedApiTests(unittest.TestCase):
         response = self.client.get("/db/count")
 
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.json(), 3)
+        self.assertEqual(response.json(), 2)
 
 
 if __name__ == "__main__":

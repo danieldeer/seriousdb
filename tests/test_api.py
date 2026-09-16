@@ -226,18 +226,31 @@ def test_count_returns_number_of_key_value_pairs(client):
     response = client.get("/db/count")
 
     assert response.status_code == 200
-    assert response.json() == 3
+    assert response.json() == 2
 
 
-def test_count_includes_default_key(client):
+def test_count_return_zero_on_empty_db(client):
+    response = client.get("/db/count")
+
+    assert response.status_code == 200
+    assert response.json() == 0
+
+
+def test_count_decreases_after_deleting_key(client):
+    client.put(
+        "/db",
+        params={"key": "name", "value": "Alice"},
+    )
+
     response = client.get("/db/count")
 
     assert response.status_code == 200
     assert response.json() == 1
 
-
-def test_count_is_zero_after_removing_default_key(client):
-    response = client.delete("/db", params={"key": "default"})
+    response = client.delete(
+        "/db",
+        params={"key": "name"},
+    )
 
     assert response.status_code == 200
 

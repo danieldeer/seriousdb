@@ -69,7 +69,7 @@ class TestApplicationExceptions:
 
     def test_require_db_returns_the_loaded_database(self):
         cache = Cache()
-        cache.db = {"default": "default"}
+        cache.db = {}
         assert require_db(cache) is cache.db
 
     def test_require_db_raises_service_unavailable_without_a_database(self):
