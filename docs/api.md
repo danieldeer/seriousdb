@@ -23,6 +23,13 @@ key: name
 value: Alice
 ```
 
+An example inserting value `"Alice"` into key `"name"` using curl:
+```shell
+curl -X 'PUT' \
+  'http://localhost:8000/db?key=name&value=Alice' \
+  -H 'accept: */*'
+```
+
 This stores:
 
 ```python
@@ -43,6 +50,13 @@ For example:
 key: name
 ```
 
+An example getting the value associated with key `"name"` using curl:
+```shell
+curl -X 'GET' \
+  'http://localhost:8000/db?key=name' \
+  -H 'accept: */*'
+```
+
 returns:
 
 ```text
@@ -54,6 +68,13 @@ If the requested key does not exist, the API returns a `404` response.
 ### GET `/health`
 
 Reports whether the database cache has finished loading.
+
+Getting the health status using curl:
+```shell
+curl -X 'GET' \
+  'http://localhost:8000/health' \
+  -H 'accept: */*'
+```
 
 When the service is ready, the endpoint returns `200`:
 
@@ -77,6 +98,13 @@ For example:
 key: name
 ```
 
+Checking if key `"name"` exists in the database with curl:
+```shell
+curl -X 'HEAD' \
+  'http://localhost:8000/db?key=name' \
+  -H 'accept: */*'
+```
+
 If the requested key exists, the API returns a `200` response.
 
 If the requested key does not exist, the API returns a `404` response.
@@ -89,6 +117,13 @@ For example:
 
 ```text
 GET /db/bulk?key=name&key=language
+```
+
+Getting multiple keys with curl:
+```shell
+curl -X 'GET' \
+  'http://localhost:8000/db/bulk?key=name&key=language' \
+  -H 'accept: */*'
 ```
 
 returns:
@@ -110,6 +145,13 @@ For example:
 
 ```text
 GET /db/all
+```
+
+Getting all key-value pairs in the database with curl:
+```shell
+curl -X 'GET' \
+  'http://localhost:8000/db/all' \
+  -H 'accept: */*'
 ```
 
 returns:
@@ -142,6 +184,13 @@ If the database contains:
 }
 ```
 
+Then running
+```shell
+curl -X 'GET' \
+  'http://localhost:8000/db/count' \
+  -H 'accept: */*'
+```
+
 returns:
 
 ```text
@@ -162,6 +211,12 @@ For example:
 
 ```text
 key: name
+```
+Using curl:
+```shell
+curl -X 'DELETE' \
+  'http://localhost:8000/db?key=name' \
+  -H 'accept: */*'
 ```
 
 If the key exists, the API returns its previous value.
