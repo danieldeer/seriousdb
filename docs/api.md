@@ -4,6 +4,43 @@ The server exposes a small HTTP API through FastAPI.
 
 Interactive OpenAPI documentation is available at `http://127.0.0.1:8000/docs` while the server is running.
 
+## Example usage
+
+The following examples assume the server is running on `http://127.0.0.1:8000`.
+
+Store a value under a key:
+
+```bash
+curl -X PUT "http://127.0.0.1:8000/db?key=name&value=Alice"
+```
+
+Retrieve a stored value:
+
+```bash
+curl "http://127.0.0.1:8000/db?key=name"
+```
+
+Check whether a key exists:
+
+```bash
+curl -I "http://127.0.0.1:8000/db?key=name"
+```
+
+Delete a key:
+
+```bash
+curl -X DELETE "http://127.0.0.1:8000/db?key=name"
+```
+
+Empty-string keys are valid in SeriousDB, so this is also allowed:
+
+```bash
+curl -X PUT "http://127.0.0.1:8000/db?key=&value=Alice"
+curl "http://127.0.0.1:8000/db?key="
+```
+
+A missing `key` parameter is still considered invalid and returns `422`.
+
 ### PUT `/db`
 
 Stores or updates a key-value pair.
@@ -13,7 +50,7 @@ Stores or updates a key-value pair.
 
 Parameters:
 
-- `key` - The key to store. Must contain at least one character.
+- `key` - The key to store. The empty string is valid and treated as a real key value.
 - `value` - The value associated with the key.
 
 For example:
@@ -49,7 +86,9 @@ returns:
 Alice
 ```
 
-If the requested key does not exist, the API returns a `404` response.
+The empty string is also a valid key, so `GET /db?key=` will retrieve the value stored under that empty key.
+
+If the requested non-empty key does not exist, the API returns a `404` response.
 
 ### GET `/health`
 
@@ -79,7 +118,9 @@ key: name
 
 If the requested key exists, the API returns a `200` response.
 
-If the requested key does not exist, the API returns a `404` response.
+The empty string is a valid key, so `HEAD /db?key=` checks whether the empty-key record exists.
+
+If the requested non-empty key does not exist, the API returns a `404` response.
 
 ### GET `/db/bulk`
 
@@ -156,7 +197,7 @@ Deletes a key-value pair.
 
 Parameters:
 
-- `key` - The key to delete.
+- `key` - The key to delete. The empty string is valid and deletes the empty-key record if it exists.
 
 For example:
 
@@ -166,7 +207,7 @@ key: name
 
 If the key exists, the API returns its previous value.
 
-If the requested key does not exist, the API returns a `404` response.
+If the requested non-empty key does not exist, the API returns a `404` response.
 
 ## Error responses
 
