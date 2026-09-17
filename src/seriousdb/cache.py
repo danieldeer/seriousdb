@@ -10,12 +10,15 @@ import logging
 import os
 import time
 from threading import Lock
+from typing import Any, TypeAlias
 
 from .exceptions import ResourceNotFoundError, ServiceUnavailableError
 
 logger = logging.getLogger(__name__)
 
 DEFAULT_DB = {}
+
+JsonValue: TypeAlias = str | int | float | bool | None | list[Any] | dict[str, Any]
 
 
 class Cache:
@@ -37,10 +40,10 @@ class Cache:
 
     def __init__(self):
         self.filename: str | None = None
-        self.db: dict[str, str] | None = None
+        self.db: dict[str, JsonValue] | None = None
         self.lock = Lock()
 
-    def insert(self, key: str, value: str) -> tuple[str, bool]:
+    def insert(self, key: str, value: JsonValue) -> tuple[JsonValue, bool]:
         """Store `value` under `key`, replacing any existing value.
 
         The change is only kept in memory; call :meth:`flush` to persist it.
@@ -71,7 +74,7 @@ class Cache:
             db[key] = value
         return value, is_new_key
 
-    def select(self, key: str) -> str:
+    def select(self, key: str) -> JsonValue:
         """Return the value stored under `key`.
 
         Parameters
@@ -92,12 +95,14 @@ class Cache:
             If no database has been loaded.
         """
         with self.lock:
-            val = require_db(self).get(key, None)
-        if val is None:
-            raise ResourceNotFoundError(f"No value set for key {key}")
-        return val
+            db = require_db(self)
 
-    def delete(self, key: str) -> str:
+            if key not in db:
+                raise ResourceNotFoundError(f"No value set for key {key}")
+
+        return db[key]
+
+    def delete(self, key: str) -> JsonValue:
         """Remove `key` and return the value it had.
 
         The change is only kept in memory; call :meth:`flush` to persist it.
@@ -120,10 +125,12 @@ class Cache:
             If no database has been loaded.
         """
         with self.lock:
-            val = require_db(self).pop(key, None)
-        if val is None:
-            raise ResourceNotFoundError(f"No value set for key {key}")
-        return val
+            db = require_db(self)
+
+            if key not in db:
+                raise ResourceNotFoundError(f"No value set for key {key}")
+
+            return db.pop(key)
 
     def load(self, filename: str) -> None:
         """Load the database from `filename`, replacing the current data.
@@ -185,13 +192,13 @@ class Cache:
                 f.write(json.dumps(self.db).encode())
 
 
-def _write_default(filename: str) -> dict[str, str]:
+def _write_default(filename: str) -> dict[str, JsonValue]:
     with open(filename, "wb") as f:
         f.write(json.dumps(DEFAULT_DB).encode())
     return dict(DEFAULT_DB)
 
 
-def require_db(cache: Cache) -> dict[str, str]:
+def require_db(cache: Cache) -> dict[str, JsonValue]:
     """Return the loaded data of `cache`.
 
     The caller must hold ``cache.lock`` while using the returned ``dict``.

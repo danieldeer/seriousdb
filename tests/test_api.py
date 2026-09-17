@@ -311,3 +311,216 @@ def test_bulk_missing_key_parameter_returns_422(client):
     response = client.get("/db/bulk")
 
     assert response.status_code == 422
+
+
+def test_put_stores_integer(client):
+    response = client.put(
+        "/db",
+        params={"key": "count", "value": "42"},
+    )
+
+    assert response.status_code == 201
+    assert response.json() == 42
+
+
+def test_put_stores_float(client):
+    response = client.put(
+        "/db",
+        params={"key": "ratio", "value": "3.14"},
+    )
+
+    assert response.status_code == 201
+    assert response.json() == 3.14
+
+
+def test_put_stores_boolean_true(client):
+    response = client.put(
+        "/db",
+        params={"key": "active", "value": "true"},
+    )
+
+    assert response.status_code == 201
+    assert response.json() is True
+
+
+def test_put_stores_boolean_false(client):
+    response = client.put(
+        "/db",
+        params={"key": "active", "value": "false"},
+    )
+
+    assert response.status_code == 201
+    assert response.json() is False
+
+
+def test_put_stores_null(client):
+    response = client.put(
+        "/db",
+        params={"key": "nothing", "value": "null"},
+    )
+
+    assert response.status_code == 201
+    assert response.json() is None
+
+
+def test_put_stores_json_array(client):
+    response = client.put(
+        "/db",
+        params={"key": "tags", "value": '["python", "fastapi", "json"]'},
+    )
+
+    assert response.status_code == 201
+    assert response.json() == ["python", "fastapi", "json"]
+
+
+def test_put_stores_json_object(client):
+    response = client.put(
+        "/db",
+        params={"key": "user", "value": '{"name": "Alice", "age": 30}'},
+    )
+
+    assert response.status_code == 201
+    assert response.json() == {"name": "Alice", "age": 30}
+
+
+def test_put_stores_nested_json_object(client):
+    response = client.put(
+        "/db",
+        params={
+            "key": "config",
+            "value": '{"server": {"host": "localhost", "port": 8080}, "debug": true}',
+        },
+    )
+
+    assert response.status_code == 201
+    assert response.json() == {
+        "server": {"host": "localhost", "port": 8080},
+        "debug": True,
+    }
+
+
+def test_put_stores_plain_string_when_not_valid_json(client):
+    response = client.put(
+        "/db",
+        params={"key": "greeting", "value": "hello world"},
+    )
+
+    assert response.status_code == 201
+    assert response.json() == "hello world"
+
+
+def test_get_returns_integer(client):
+    client.put(
+        "/db",
+        params={"key": "count", "value": "42"},
+    )
+
+    response = client.get(
+        "/db",
+        params={"key": "count"},
+    )
+
+    assert response.status_code == 200
+    assert response.json() == 42
+
+
+def test_get_returns_json_array(client):
+    client.put(
+        "/db",
+        params={"key": "tags", "value": '["python", "fastapi"]'},
+    )
+
+    response = client.get(
+        "/db",
+        params={"key": "tags"},
+    )
+
+    assert response.status_code == 200
+    assert response.json() == ["python", "fastapi"]
+
+
+def test_get_returns_json_object(client):
+    client.put(
+        "/db",
+        params={"key": "user", "value": '{"name": "Alice", "age": 30}'},
+    )
+
+    response = client.get(
+        "/db",
+        params={"key": "user"},
+    )
+
+    assert response.status_code == 200
+    assert response.json() == {"name": "Alice", "age": 30}
+
+
+def test_get_all_returns_mixed_json_types(client):
+    client.put("/db", params={"key": "name", "value": "Alice"})
+    client.put("/db", params={"key": "age", "value": "30"})
+    client.put("/db", params={"key": "active", "value": "true"})
+    client.put("/db", params={"key": "scores", "value": "[10, 20, 30]"})
+    client.put("/db", params={"key": "address", "value": '{"city": "Berlin"}'})
+    client.put("/db", params={"key": "nickname", "value": "null"})
+
+    response = client.get("/db/all")
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "name": "Alice",
+        "age": 30,
+        "active": True,
+        "scores": [10, 20, 30],
+        "address": {"city": "Berlin"},
+        "nickname": None,
+    }
+
+
+def test_delete_returns_json_value(client):
+    client.put(
+        "/db",
+        params={"key": "config", "value": '{"debug": true}'},
+    )
+
+    response = client.delete(
+        "/db",
+        params={"key": "config"},
+    )
+
+    assert response.status_code == 200
+    assert response.json() == {"debug": True}
+
+
+def test_bulk_returns_mixed_json_types(client):
+    client.put("/db", params={"key": "count", "value": "99"})
+    client.put("/db", params={"key": "labels", "value": '["a", "b"]'})
+
+    response = client.get(
+        "/db/bulk",
+        params=[("key", "count"), ("key", "labels")],
+    )
+
+    assert response.status_code == 200
+    assert response.json() == {"count": 99, "labels": ["a", "b"]}
+
+
+def test_put_overwrites_with_different_json_type(client):
+    client.put(
+        "/db",
+        params={"key": "value", "value": "hello"},
+    )
+
+    response = client.put(
+        "/db",
+        params={"key": "value", "value": "123"},
+    )
+
+    assert response.status_code == 200
+    assert response.json() == 123
+
+    response = client.get(
+        "/db",
+        params={"key": "value"},
+    )
+
+    assert response.status_code == 200
+    assert response.json() == 123

@@ -14,9 +14,10 @@ from fastapi import (
     status,
 )
 
-from .cache import Cache, require_db
+from .cache import Cache, JsonValue, require_db
 from .config import DB_FILE, LOG_LEVEL
 from .error_handlers import register_exception_handlers
+from .parser import parse_value
 
 cache = Cache()
 
@@ -38,6 +39,7 @@ def get_cache() -> Cache:
 
 @app.put(
     "/db",
+    response_model=None,
     summary="Store a key-value pair",
     description=cleandoc(
         """
@@ -67,15 +69,19 @@ def put(
     background_tasks: BackgroundTasks,
     cache: Annotated[Cache, Depends(get_cache)],
     response: Response,
-) -> str:
-    value, is_new_key = cache.insert(key, value)
+) -> JsonValue:
+    parsed_value = parse_value(value)
+    stored_value, is_new_key = cache.insert(key, parsed_value)
+
     response.status_code = status.HTTP_201_CREATED if is_new_key else status.HTTP_200_OK
+
     background_tasks.add_task(cache.flush)
-    return value
+    return stored_value
 
 
 @app.get(
     "/db",
+    response_model=None,
     summary="Get the value of a key",
     description=cleandoc(
         """
@@ -91,12 +97,13 @@ def put(
 def get(
     key: Annotated[str, Query(description="The key to look up.")],
     cache: Annotated[Cache, Depends(get_cache)],
-) -> str:
+) -> JsonValue:
     return cache.select(key)
 
 
 @app.head(
     "/db",
+    response_model=None,
     summary="Check whether a key exists",
     description=cleandoc(
         """
@@ -117,12 +124,13 @@ def get(
 async def head(
     key: Annotated[str, Query(description="The key to check.")],
     cache: Annotated[Cache, Depends(get_cache)],
-) -> str:
+) -> JsonValue:
     return cache.select(key)
 
 
 @app.get(
     "/db/all",
+    response_model=None,
     summary="Get all key-value pairs",
     description=cleandoc(
         """
@@ -134,7 +142,7 @@ async def head(
         503: {"description": "The database file could not be opened and loaded."}
     },
 )
-def get_all(cache: Annotated[Cache, Depends(get_cache)]) -> dict[str, str]:
+def get_all(cache: Annotated[Cache, Depends(get_cache)]) -> dict[str, JsonValue]:
     with cache.lock:
         return require_db(cache).copy()
 
@@ -160,7 +168,7 @@ def get_all(cache: Annotated[Cache, Depends(get_cache)]) -> dict[str, str]:
 )
 def get_bulk(
     key: Annotated[list[str], Query()], cache: Annotated[Cache, Depends(get_cache)]
-) -> dict[str, str]:
+) -> dict[str, JsonValue]:
     with cache.lock:
         db = require_db(cache).copy()
         return {k: db[k] for k in key if k in db}
@@ -186,6 +194,7 @@ def count(cache: Annotated[Cache, Depends(get_cache)]):
 
 @app.delete(
     "/db",
+    response_model=None,
     summary="Delete a key",
     description=cleandoc(
         """
@@ -205,7 +214,7 @@ def delete(
     key: Annotated[str, Query(description="The key to remove.")],
     background_tasks: BackgroundTasks,
     cache: Annotated[Cache, Depends(get_cache)],
-) -> str:
+) -> JsonValue:
     value = cache.delete(key)
     background_tasks.add_task(cache.flush)
     return value
