@@ -60,9 +60,7 @@ def get_cache() -> Cache:
     },
 )
 def put(
-    key: Annotated[
-        str, Query(min_length=1, description="The key to store the value under.")
-    ],
+    key: Annotated[str, Query(description="The key to store the value under.")],
     value: Annotated[str, Query(description="The value to store.")],
     background_tasks: BackgroundTasks,
     cache: Annotated[Cache, Depends(get_cache)],

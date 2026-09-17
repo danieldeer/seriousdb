@@ -78,13 +78,22 @@ def test_get_all_returns_all_values(client):
     }
 
 
-def test_put_empty_key_returns_422(client):
+def test_put_empty_key_is_valid(client):
     response = client.put(
         "/db",
-        params={"key": "", "value": "test_value"},
+        params={"key": "", "value": "Alice"},
     )
 
-    assert response.status_code == 422
+    assert response.status_code == 201
+    assert response.json() == "Alice"
+
+    response = client.put(
+        "/db",
+        params={"key": "", "value": "Bob"},
+    )
+
+    assert response.status_code == 200
+    assert response.json() == "Bob"
 
 
 def test_put_missing_key_returns_422(client):
@@ -109,6 +118,28 @@ def test_get_missing_key_parameter_returns_422(client):
     response = client.get("/db")
 
     assert response.status_code == 422
+
+
+def test_empty_key_lifecycle(client):
+    response = client.put(
+        "/db",
+        params={"key": "", "value": "Alice"},
+    )
+    assert response.status_code == 201
+
+    response = client.get("/db", params={"key": ""})
+    assert response.status_code == 200
+    assert response.json() == "Alice"
+
+    response = client.head("/db", params={"key": ""})
+    assert response.status_code == 200
+
+    response = client.delete("/db", params={"key": ""})
+    assert response.status_code == 200
+    assert response.json() == "Alice"
+
+    response = client.get("/db", params={"key": ""})
+    assert response.status_code == 404
 
 
 def test_delete_missing_key_parameter_returns_422(client):
