@@ -2,9 +2,9 @@ name: E2E
 
 on:
   pull_request:
-    branches: [main]
+    branches: [main, develkopment]
   push:
-    branches: [main]
+    branches: [main, develkopment]
 
 jobs:
   e2e:
