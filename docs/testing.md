@@ -1,10 +1,11 @@
 # Testing
 
-The project uses `pytest` for automated testing and FastAPI's `TestClient` for API testing.
+The project uses `pytest` for automated testing of the Python API and cache,
+and FastAPI's `TestClient` for HTTP API testing.
 
 ## Running the Tests
 
-Run the full test suite with:
+Run the regular test suite in `tests/` with:
 
 ```bash
 uv run pytest
@@ -12,12 +13,15 @@ uv run pytest
 
 The test suite covers:
 
-- API endpoint behavior
+- Python API operations and synchronous persistence
+- HTTP endpoint behavior
 - Validation behavior
 - CRUD operations
-- Concurrent database access
+- Threads accessing a single shared cache
 
 Each test uses an isolated temporary database so the test suite does not modify the local `.sdb` database.
+
+The benchmark scenarios run separately using the commands below.
 
 ## Performance benchmarks
 

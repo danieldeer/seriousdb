@@ -9,21 +9,21 @@ For setup, usage, architecture, persistence, and contribution guidance, see the 
 
 ## Quick Start
 
-### Use as Python library
+### Use as a Python library
 
-Install using
+Install the current source from `main` using pip:
 
-- pip:
 ```bash
 pip install git+https://github.com/danieldeer/seriousdb.git
 ```
-Or
-- uv:
+
+Or add it to a uv project:
+
 ```bash
 uv add git+https://github.com/danieldeer/seriousdb.git
 ```
 
-Then use it directly form your python project:
+Then use it directly from your Python project:
 
 ```python
 import seriousdb
@@ -31,6 +31,10 @@ import seriousdb
 seriousdb.set("name", "Alice")
 print(seriousdb.get("name"))
 ```
+
+The database is loaded on first use. See the [Python API](docs/api.md#python-api)
+for supported operations and [persistence](docs/persistence.md) for file handling
+and concurrency limits.
 
 ### Run as HTTP server
 
@@ -45,7 +49,8 @@ uv run run.py
 
 The server is available at `http://127.0.0.1:8000`.
 
-> To change the default IP and PORT, define the environment variables `APP_HOST` and `APP_PORT` to your preferred values.
+> To change the default IP and PORT, define `SERIOUSDB_HOST` and
+> `SERIOUSDB_PORT` in the environment.
 
 Interactive API documentation is available at:
 
@@ -55,7 +60,7 @@ Interactive API documentation is available at:
 
 ## Configuration
 
-Server configuration is optional and can be customized from environment variables.
+Configuration is optional and can be customized from environment variables.
 Copy the example file and adjust for local development:
 
 ```bash
@@ -65,11 +70,15 @@ cp .env.example .env
 The `.env` file is gitignored and should never be committed.
 
 | Variable              | Default     | Description                                        |
-| --------------------- | ----------- | -------------------------------------------------- |
+|-----------------------|-------------|----------------------------------------------------|
 | `SERIOUSDB_DB_FILE`   | `.sdb`      | Path to the on-disk database file.                 |
 | `SERIOUSDB_LOG_LEVEL` | `INFO`      | Logging level (DEBUG/INFO/WARNING/ERROR/CRITICAL). |
 | `SERIOUSDB_HOST`      | `127.0.0.1` | Host IP where the API is running.                  |
 | `SERIOUSDB_PORT`      | `8000`      | Host port which is used by the API.                |
+
+Set configuration before importing `seriousdb` or starting the server.
+`SERIOUSDB_HOST` and `SERIOUSDB_PORT` configure the server started by `run.py`;
+they do not affect direct Python calls.
 
 ## Documentation
 
@@ -80,6 +89,7 @@ The `.env` file is gitignored and should never be committed.
 - [Contributing](docs/contributing.md)
 - [Testing](docs/testing.md)
 - [Project configuration](docs/configuration.md)
+- [Changelog](CHANGELOG.md)
 
 ## License
 
