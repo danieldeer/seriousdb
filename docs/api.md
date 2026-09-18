@@ -227,5 +227,5 @@ no body, including on errors:
 |--------|----------------------------|--------------------------------------------------------------|
 | `404`  | `resource_not_found`       | The requested key does not exist.                            |
 | `422`  | `request_validation_error` | A required query parameter is missing or has the wrong type. |
-| `503`  | `service_unavailable`      | The database file could not be opened and loaded.            |
+| `503`  | `service_unavailable`      | The database cache has not been loaded.                      |
 | `500`  | `internal_server_error`    | An unexpected error. Details are never returned.             |

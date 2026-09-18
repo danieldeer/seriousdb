@@ -48,3 +48,4 @@ Python callers receive application exceptions or file-access `OSError`s directly
 For HTTP, `error_handlers.py` translates application and HTTP exceptions into
 [error responses](api.md#http-error-responses), with a generic `500` for unexpected
 request errors. A background flush failure cannot change a response already sent.
+File-access errors during the initial load prevent the HTTP server from starting.

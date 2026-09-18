@@ -79,7 +79,7 @@ workload version changes. OPS counts whole scenarios per second, not individual
 reads/writes.
 
 CI checks benchmark correctness without timing thresholds. Performance history
-stays local for now; automated reporting and dashboards are deferred.
+stays local.
 
 Persistence timings exclude `fsync` and may benefit from OS caching; they do not
 measure crash-safe commits or cold-disk performance. Concurrency benchmarks use

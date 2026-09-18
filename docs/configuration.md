@@ -1,7 +1,10 @@
 # Project configuration
 
-SeriousDB works without configuration. Override defaults with environment variables
-or a `.env` file copied from [`.env.example`](../.env.example).
+SeriousDB works without configuration. Override defaults with environment variables.
+When running from this repository, you can also copy [`.env.example`](../.env.example)
+to `.env` at the repository root. When using the installed package, explicitly load
+your application's `.env` file before importing `seriousdb` if needed; do not rely
+on automatic discovery.
 
 ## Configuring environment variables (for Users)
 
