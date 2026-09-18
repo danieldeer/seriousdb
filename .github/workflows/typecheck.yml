@@ -2,9 +2,9 @@ name: TY Typecheck
 
 on:
   pull_request:
-    branches: [main, develkopment]
+    branches: [main, development]
   push:
-    branches: [main, develkopment]
+    branches: [main, development]
 
 permissions:
   contents: read
