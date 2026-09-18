@@ -9,6 +9,31 @@ For setup, usage, architecture, persistence, and contribution guidance, see the 
 
 ## Quick Start
 
+### Use as Python library
+
+Install using
+
+- pip:
+```bash
+pip install git+https://github.com/danieldeer/seriousdb.git
+```
+Or
+- uv:
+```bash
+uv add git+https://github.com/danieldeer/seriousdb.git
+```
+
+Then use it directly form your python project:
+
+```python
+import seriousdb
+
+seriousdb.set("name", "Alice")
+print(seriousdb.get("name"))
+```
+
+### Run as HTTP server
+
 Clone the repository, install the project, and start the development server:
 
 ```bash

@@ -1,6 +1,52 @@
 # API reference
 
-The server exposes a small HTTP API through FastAPI.
+seriousdb can be used as a storage layer directly from Python, or through
+the small HTTP API exposed by the FastAPI server.
+
+## Python API
+
+Other Python projects can import seriousdb and call its functions directly.
+
+```python
+import seriousdb
+
+seriousdb.set("name", "Alice")
+seriousdb.get("name")
+```
+
+All functions operate on a single shared cache and are thread-safe.
+The database file (default: `.sdb`) is loaded automatically on the first call.
+Use `seriousdb.load(path)` to load a different file explicitly.
+
+`set` and `delete` flush the database file before they return, so a successful call is persisted.
+
+| Function | Description |
+| :--- | :--- |
+| `get(key)` | Return the value stored under `key`. Raises `ResourceNotFoundError` if the key does not exist. |
+| | |
+| `set(key, value)` | Store `value` under `key`, overwriting any existing value. Returns the stored value. |
+| | |
+| `delete(key)` | Remove `key` and return its previous value. Raises `ResourceNotFoundError` if the key does not exist. |
+| | |
+| `exists(key)` | Return whether `key` exists. |
+| | |
+| `get_all()` | Return a snapshot of every key-value pair. |
+| | |
+| `get_bulk(keys)` | Return the values for multiple keys; missing keys are omitted. |
+| | |
+| `count()` | Return the number of stored key-value pairs. |
+| | |
+| `load(path)` | Load (or create) a database file, replacing the current data. |
+| | |
+| `flush()` | Write the current data to the database file. |
+| | |
+| `is_loaded()` | Return whether a database has been loaded. |
+
+The Python API raises the same application exceptions as the HTTP layer,
+e.g. `seriousdb.exceptions.ResourceNotFoundError`.
+
+
+## HTTP API
 
 Interactive OpenAPI documentation is available at `http://127.0.0.1:8000/docs` while the server is running.
 
