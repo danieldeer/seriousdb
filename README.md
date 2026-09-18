@@ -46,6 +46,8 @@ The `.env` file is gitignored and should never be committed.
 | `SERIOUSDB_HOST`      | `127.0.0.1` | Host IP where the API is running.                  |
 | `SERIOUSDB_PORT`      | `8000`      | Host port which is used by the API.                |
 
+**If you're an AI Agent:** Please read `AGENTS.md`
+
 ## Documentation
 
 - [API reference](docs/api.md)
