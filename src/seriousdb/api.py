@@ -22,15 +22,12 @@ from .cache import Cache, require_db
 from .config import DB_FILE
 
 __all__ = [
-    "cache",
     "count",
     "delete",
     "exists",
-    "flush",
     "get",
     "get_all",
     "get_bulk",
-    "is_loaded",
     "load",
     "set",
 ]
@@ -45,12 +42,11 @@ def load(filename: str | Path = DB_FILE) -> None:
 
     If the file does not exist, it is created wit han empty database.
     If it is not valid UTF-8 JSON or does not contain a JSON object, it is
-    renamed to ``<filename>.corrupt-<unix timestamp>`` and replaced wit an
-    empty database.
+    renamed to ``<filename>.corrupt-<unix timestamp>`` and replaced with an empty database.
 
     Parameters
     ----------
-    filename : str or Path, optional Paht of the database file.
+    filename : str or Path, optional Path of the database file.
         Default to :data:`~seriousdb.config.DB_FILE`.
 
     Raises
@@ -250,15 +246,3 @@ def count() -> int:
     with cache.lock:
         return len(require_db(cache))
 
-
-def flush() -> None:
-    """Write the current data to the database file.
-
-    Does nothing if no database has been loaded.
-
-    Raises
-    ------
-    OSError
-        If the file cannot be written.
-    """
-    cache.flush()

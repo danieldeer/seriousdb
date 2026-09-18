@@ -15,11 +15,11 @@ from fastapi import (
 
 from seriousdb.logging_config import configure_logging
 
-from .api import cache
 from .cache import Cache, require_db
 from .config import DB_FILE
 from .error_handlers import register_exception_handlers
 
+cache = Cache()
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
