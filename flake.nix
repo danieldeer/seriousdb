@@ -19,17 +19,25 @@
         system:
         let
           pkgs = import nixpkgs { inherit system; };
+
           python = pkgs.python314.withPackages (
             pythonPackages: with pythonPackages; [
-              ruff
               fastapi
               fastapi-cli
+              python-dotenv
+              uvicorn
+
+              pytest
+              pytest-benchmark
+              ruff
+              ty
             ]
           );
         in
         {
           default = pkgs.mkShell {
             packages = [ python ];
+
             shellHook = ''
               export PYTHONPATH="${toString ./.}/src''${PYTHONPATH:+:$PYTHONPATH}"
             '';
