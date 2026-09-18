@@ -28,7 +28,6 @@ __all__ = [
     "get",
     "get_all",
     "get_bulk",
-    "load",
     "set",
 ]
 

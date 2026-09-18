@@ -35,12 +35,6 @@ Use `seriousdb.load(path)` to load a different file explicitly.
 | `get_bulk(keys)` | Return the values for multiple keys; missing keys are omitted. |
 | | |
 | `count()` | Return the number of stored key-value pairs. |
-| | |
-| `load(path)` | Load (or create) a database file, replacing the current data. |
-| | |
-| `flush()` | Write the current data to the database file. |
-| | |
-| `is_loaded()` | Return whether a database has been loaded. |
 
 The Python API raises the same application exceptions as the HTTP layer,
 e.g. `seriousdb.exceptions.ResourceNotFoundError`.

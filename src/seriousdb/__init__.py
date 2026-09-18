@@ -15,7 +15,6 @@ from seriousdb.api import (
     get,
     get_all,
     get_bulk,
-    load,
     set,
 )
 
@@ -26,6 +25,5 @@ __all__ = [
     "get",
     "get_all",
     "get_bulk",
-    "load",
     "set",
 ]
