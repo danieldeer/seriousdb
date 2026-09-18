@@ -1,60 +1,48 @@
-import unittest
-from contextlib import contextmanager
-from pathlib import Path
-from tempfile import TemporaryDirectory
-from unittest.mock import patch
+"""Tests for the readiness endpoint."""
 
+import pytest
 from fastapi.testclient import TestClient
 
 from seriousdb import main
 from seriousdb.cache import Cache
 
 
-@contextmanager
-def isolated_cache(database_path: Path):
-    original_filename = main.cache.filename
-    original_db = main.cache.db
-    try:
-        main.cache.filename = None
-        main.cache.db = None
-        with (
-            patch.object(main, "DB_FILE", database_path),
-            TestClient(main.app) as client,
-        ):
-            yield client
-    finally:
-        main.cache.filename = original_filename
-        main.cache.db = original_db
+@pytest.fixture
+def client(tmp_path, monkeypatch):
+    """A TestClient backed by a throwaway database file and an empty cache.
+
+    The module-level cache is emptied so that startup has to load it, and
+    ``monkeypatch`` restores it afterwards.
+    """
+    monkeypatch.setattr(main.cache, "filename", None)
+    monkeypatch.setattr(main.cache, "db", None)
+    monkeypatch.setattr(main, "DB_FILE", str(tmp_path / "test.sdb"))
+
+    with TestClient(main.app) as test_client:
+        yield test_client
 
 
-class HealthEndpointTests(unittest.TestCase):
-    def test_health_reports_ready_after_startup_loads_cache(self):
-        with TemporaryDirectory() as directory:
-            database_path = Path(directory) / "test.sdb"
-            with isolated_cache(database_path) as client:
-                response = client.get("/health")
+@pytest.fixture
+def unavailable_client(monkeypatch):
+    """A TestClient whose cache never gets loaded, without running startup."""
+    unloaded = Cache()
+    monkeypatch.setitem(main.app.dependency_overrides, main.get_cache, lambda: unloaded)
 
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.json(), {"status": "ok"})
-
-    def test_health_reports_unavailable_cache(self):
-        cache = Cache()
-        main.app.dependency_overrides[main.get_cache] = lambda: cache
-
-        try:
-            response = TestClient(main.app).get("/health")
-        finally:
-            main.app.dependency_overrides.clear()
-
-        self.assertEqual(response.status_code, 503)
-        self.assertEqual(
-            response.json(),
-            {
-                "detail": "Service unavailable",
-                "error": "service_unavailable",
-            },
-        )
+    return TestClient(main.app)
 
 
-if __name__ == "__main__":
-    unittest.main()
+def test_health_reports_ready_after_startup_loads_cache(client):
+    response = client.get("/health")
+
+    assert response.status_code == 200
+    assert response.json() == {"status": "ok"}
+
+
+def test_health_reports_unavailable_cache(unavailable_client):
+    response = unavailable_client.get("/health")
+
+    assert response.status_code == 503
+    assert response.json() == {
+        "detail": "Service unavailable",
+        "error": "service_unavailable",
+    }

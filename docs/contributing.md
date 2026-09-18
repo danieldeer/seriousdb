@@ -18,13 +18,16 @@ PRs that skip this process may be closed without review.
 - Follow the [docstring conventions](development.md#docstrings).
 - If you add or change an endpoint, update [the API reference](api.md) and verify the behavior via the FastAPI docs at `/docs` or an HTTP client.
 
-Run the same lint and formatting checks used by CI:
+Run the same tests, lint, and formatting checks used by CI:
 
 ```bash
 uv sync --locked
+uv run pytest
 uv run ruff check .
 uv run ruff format --check .
 ```
+
+See [Testing](testing.md) for more about the test suite.
 
 The `Lint and format` workflow runs on pull requests targeting `main` and pushes to `main`.
 It reports violations without modifying files.

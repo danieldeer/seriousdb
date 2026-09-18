@@ -22,6 +22,8 @@
           python = pkgs.python314.withPackages (
             pythonPackages: with pythonPackages; [
               ruff
+              pytest
+              httpx
               fastapi
               fastapi-cli
             ]

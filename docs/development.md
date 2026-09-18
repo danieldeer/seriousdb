@@ -48,6 +48,22 @@ The server is available at `http://127.0.0.1:8000` and its interactive API docum
 
 The readiness endpoint is available at `/health`.
 
+## Testing
+
+Run the test suite with `pytest`:
+
+```bash
+uv run pytest
+```
+
+### Nix in Nix develop
+
+```bash
+pytest
+```
+
+See [Testing](testing.md) for what the suite covers.
+
 ## Formatting
 
 Format Python files with `ruff`:
