@@ -64,3 +64,6 @@ convention = "numpy"
 
 [tool.ruff.format]
 docstring-code-format = true
+
+[tool.ty.environment]
+root = ["."]
