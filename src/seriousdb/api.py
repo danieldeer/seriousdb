@@ -244,4 +244,3 @@ def count() -> int:
     _ensure_loaded()
     with cache.lock:
         return len(require_db(cache))
-

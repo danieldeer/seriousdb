@@ -21,6 +21,7 @@ from .error_handlers import register_exception_handlers
 
 cache = Cache()
 
+
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     configure_logging()
