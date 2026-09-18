@@ -25,13 +25,19 @@ uv run run.py
 
 ## Nix
 
+>The project provides a Nix development environment with the tools required for local development.
+
 ### Enter Nix develop
+
+From the project root, run:
 
 ```bash
 nix develop
 ```
 
-## Starting in Nix develop
+This starts a shell with the project's development dependencies available.
+
+## Nix (in the Nix Shell) 
 
 ```bash
 python run.py
@@ -50,50 +56,73 @@ The readiness endpoint is available at `/health`.
 
 ## Formatting
 
-Format Python files with `ruff`:
+### Format Python files with `ruff`:
+
+#### uv
 
 ```bash
 uv run ruff format .
 ```
 
-To check formatting without changing files:
-
-```bash
-uv run ruff format --check .
-```
-
-### Nix in Nix develop
+### Nix (in Nix Shell)
 
 ```bash
 ruff format .
 ```
 
+### To check formatting without changing files:
+
+#### uv
+
+```bash
+uv run ruff format --check .
+```
+
+### Nix (in Nix Shell)
+
+```bash
+ruff format --check .
+```
+
 ## Linting
 
-Lint python files with `ruff`:
+### Lint python files with `ruff`:
+
+#### uv
 
 ```bash
 uv run ruff check .
 ```
 
-Type checking with `ty`:
-```bash
-uv run ty check .
-```
-
-### Nix in Nix develop
+#### Nix (in Nix Shell)
 
 ```bash
 ruff check .
 ```
 
-To fix linter errors and warning if possible run following command:
+### Type checking with `ty`
+
+#### uv
+
+```bash
+uv run ty check .
+```
+
+#### Nix (in Nix Shell)
+
+```bash
+ty check .
+```
+
+### To fix linter errors and warning if possible run following command:
+
+#### uv
 
 ```bash
 uv run ruff check --fix .
 ```
 
-### Nix in Nix develop
+### Nix (in Nix Shell)
 
 ```bash
 ruff check --fix .
