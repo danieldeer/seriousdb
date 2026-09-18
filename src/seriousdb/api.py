@@ -40,7 +40,7 @@ _init_lock = Lock()
 def load(filename: str | Path = DB_FILE) -> None:
     """Load the database from `filename`, replacing the current data.
 
-    If the file does not exist, it is created wit han empty database.
+    If the file does not exist, it is created with an empty database.
     If it is not valid UTF-8 JSON or does not contain a JSON object, it is
     renamed to ``<filename>.corrupt-<unix timestamp>`` and replaced with an empty database.
 
