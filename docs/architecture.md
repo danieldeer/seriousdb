@@ -1,51 +1,24 @@
 # Architecture
 
-The application is currently intentionally small:
+The project is currently intentionally small:
 
-- `cache.py` provides a thread-safe in-memory dictionary backed by a JSON file.
-- `api.py` provides the synchronous Python functions exported by `__init__.py`.
-- `main.py` creates the FastAPI application and defines the HTTP routes.
-- `run.py` starts the service with Uvicorn.
+- `api.py` exposes the public, module-level functions (`get`, `set`, `delete`, ...) that other Python code imports and calls directly.
+- `cache.py` implements `Cache`, an in-memory dictionary guarded by a lock, which the API functions operate on.
+- The dictionary is loaded from and written to the local `.sdb` file.
 
-The Python API and HTTP service each create their own `Cache` instance. They do
-not share in-memory updates, even within the same process. Each cache has its own
-lock; separate caches and processes accessing the same file are not coordinated.
-See [persistence](persistence.md) for the consequences.
+The database starts with zero entries when `.sdb` does not exist. seriousdb runs in the same process as its caller; there is no separate database process.
 
-## Loading and writes
+## Call flow
 
-The Python API loads its cache on first use; the HTTP server loads its cache at
-startup. Both read from memory. Their successful write paths differ:
+1. A caller imports `seriousdb` and calls a function, e.g. `seriousdb.set(key, value)`.
+2. On first use, the module loads the dictionary from `.sdb` automatically (or from wherever `seriousdb.api.load(path)` was pointed).
+3. `set` and `delete` update the in-memory dictionary and immediately flush it back to `.sdb`; `get`, `exists`, `get_all`, `get_bulk` and `count` read the in-memory dictionary directly.
+4. The function returns the requested value, or raises an exception (see [Errors](api.md#errors)) if it can't be fulfilled.
 
-```mermaid
-sequenceDiagram
-    participant Caller
-    participant Python as Python API
-    participant HTTP as HTTP server
-    participant File as Database file
-
-    alt Python set or delete
-        Caller ->> Python: Call function
-        Python ->> Python: Update its cache under lock
-        Python ->> File: Flush full dictionary under lock
-        File -->> Python: Write complete
-        Python -->> Caller: Return value
-    else HTTP PUT or DELETE
-        Caller ->> HTTP: Send request
-        HTTP ->> HTTP: Update its cache under lock
-        HTTP -->> Caller: Send response
-        HTTP ->> File: Background flush under lock
-        File -->> HTTP: Write complete
-    end
-```
-
-An HTTP success response does not confirm persistence. File writes do not
-guarantee crash recovery; see [persistence limits](persistence.md#current-constraints).
+Separate `Cache` instances (and separate processes) have independent data and
+locks; see [persistence](persistence.md#current-constraints) for the
+consequences of using the same file from more than one of them.
 
 ## Error handling
 
-Python callers receive application exceptions or file-access `OSError`s directly.
-For HTTP, `error_handlers.py` translates application and HTTP exceptions into
-[error responses](api.md#http-error-responses), with a generic `500` for unexpected
-request errors. A background flush failure cannot change a response already sent.
-File-access errors during the initial load prevent the HTTP server from starting.
+`exceptions.py` defines `ApplicationError` and its subclasses; `cache.py` and `api.py` raise them directly wherever an operation can't succeed. Callers handle them like any other Python exception.

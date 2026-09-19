@@ -19,7 +19,6 @@ classifiers = [
 ]
 
 dependencies = [
-    "fastapi[standard]>=0.141.1",
     "python-dotenv>=1.0",
 ]
 

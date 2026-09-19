@@ -11,12 +11,6 @@ DB_FILE : str
 LOG_LEVEL : str
     Name of the logging level, from ``SERIOUSDB_LOG_LEVEL``.
     Defaults to ``INFO``.
-HOST : str
-    Host IP where the API is used, from ``SERIOUSDB_HOST``.
-    Defaults to ``127.0.0.1``
-PORT : int
-    Host port which is used by the API, from ``SERIOUSDB_PORT``
-    Defaults to ``8000``
 """
 
 import os
@@ -27,5 +21,3 @@ load_dotenv()
 
 DB_FILE = os.getenv("SERIOUSDB_DB_FILE", ".sdb")
 LOG_LEVEL = os.getenv("SERIOUSDB_LOG_LEVEL", "INFO")
-HOST = os.getenv("SERIOUSDB_HOST", "127.0.0.1")
-PORT = int(os.getenv("SERIOUSDB_PORT", "8000"))

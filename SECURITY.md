@@ -31,8 +31,8 @@ To help us triage and resolve the issue quickly, please provide as much of the f
 
 - **Summary & Impact:** A clear description of the vulnerability and the potential impact (e.g., data loss, denial of service, memory exhaustion, information disclosure).
 - **Vulnerability Classification:** If known, reference relevant CWE IDs (e.g., *CWE-372*, *CWE-400*).
-- **Proof of Concept (PoC):** Step-by-step instructions, sample requests (`curl`, bash, Python script, or JSON payload) to reproduce the issue.
-- **Affected Endpoints / Components:** Which module or API endpoint is impacted (e.g., `PUT /items`, `DbEngine`, storage compaction).
+- **Proof of Concept (PoC):** Step-by-step instructions or a sample Python script to reproduce the issue.
+- **Affected Functions / Components:** Which module or public function is impacted (e.g., `seriousdb.set`, `Cache`, storage compaction).
 - **Suggested Fix:** If you have ideas or patches on how to resolve the issue, feel free to include them.
 
 ## Handling Process & Disclosure

@@ -18,10 +18,19 @@ To sync development dependencies run following command:
 uv sync --group dev
 ```
 
-## Run locally
+## Try it out
+
+Open a Python shell with the project's dependencies available:
 
 ```bash
-uv run run.py 
+uv run python
+```
+
+```python
+import seriousdb
+
+seriousdb.set("name", "Alice")
+seriousdb.get("name")
 ```
 
 ## Nix
@@ -38,22 +47,13 @@ nix develop
 
 This starts a shell with the project's development dependencies available.
 
-## Nix (in the Nix Shell) 
+### Nix (in the Nix Shell)
 
 ```bash
-python run.py
+python
 ```
 
-## Docker
-
-```bash
-docker build -t seriousdb .
-docker run -p 8000:8000 seriousdb
-```
-
-The server is available at `http://127.0.0.1:8000` and its interactive API documentation is at `/docs`.
-
-The readiness endpoint is available at `/health`.
+Then import and use `seriousdb` as shown above.
 
 ## Formatting
 
@@ -161,44 +161,4 @@ def select(self, key: str) -> str:
     """
 ```
 
-See [`cache.py`](../src/seriousdb/cache.py) for more examples.
-
-### Endpoints
-
-Don't write docstrings for FastAPI endpoints. Document them through the route
-decorator instead (`summary=`, `description=`, `response_description=`,
-`responses=`), so the text shows up in the OpenAPI docs at `/docs`.
-Describe query parameters with `Query(description=...)`.
-
-`description` supports Markdown. Wrap multi-line descriptions in
-`inspect.cleandoc` so the indentation doesn't break the rendering:
-
-```python
-@app.delete(
-    "/db",
-    summary="Delete a key",
-    description=cleandoc(
-        """
-        Removes `key` from the database and returns its previous value.
-
-        The database file is updated in the background, so the change is
-        persisted shortly after the response is sent.
-        """
-    ),
-    response_description="The value the key had before it was deleted.",
-    responses={
-        404: {"description": "The requested key does not exist."},
-        503: {"description": "The database file could not be opened and loaded."},
-    },
-)
-def delete(
-    key: Annotated[str, Query(description="The key to remove.")],
-    background_tasks: BackgroundTasks,
-    cache: Annotated[Cache, Depends(get_cache)],
-) -> str:
-    value = cache.delete(key)
-    background_tasks.add_task(cache.flush)
-    return value
-```
-
-See [`main.py`](../src/seriousdb/main.py) for more examples.
+See [`cache.py`](../src/seriousdb/cache.py) and [`api.py`](../src/seriousdb/api.py) for more examples.

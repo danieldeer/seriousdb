@@ -1,7 +1,6 @@
 # Testing
 
-The project uses `pytest` for automated testing of the Python API and cache,
-and FastAPI's `TestClient` for HTTP API testing.
+The project uses `pytest` for automated testing.
 
 ## Running the Tests
 
@@ -13,11 +12,11 @@ uv run pytest
 
 The test suite covers:
 
-- Python API operations and synchronous persistence
-- HTTP endpoint behavior
-- Validation behavior
+- Public Python API behavior (`seriousdb.api`)
 - CRUD operations
-- Threads accessing a single shared cache
+- Error handling
+- Concurrent database access
+- Logging
 
 Each test uses an isolated temporary database so the test suite does not modify the local `.sdb` database.
 
@@ -25,7 +24,7 @@ The benchmark scenarios run separately using the commands below.
 
 ## Performance benchmarks
 
-Benchmarks measure `Cache` directly, excluding HTTP. Inputs use seed 212, with
+Benchmarks measure `Cache` directly, excluding the `seriousdb.api` wrapper. Inputs use seed 212, with
 one unrecorded warmup and five measured rounds. Default datasets are 100 and 1,000
 entries with 32-byte values, plus 1,000 with 1,024-byte values. `--extended` adds
 10,000 and 100,000 entries with 32-byte values.
