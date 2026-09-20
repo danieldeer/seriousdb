@@ -9,6 +9,7 @@ All functions are thread-safe.
 from collections.abc import Iterable
 from pathlib import Path
 from threading import Lock
+from itertools import islice
 
 from .cache import Cache, require_db
 from .config import DB_FILE
@@ -172,8 +173,10 @@ def exists(key: str) -> bool:
         return key in require_db(cache)
 
 
-def get_all() -> dict[str, str]:
+def get_all(page: int | None = None, size: int | None = None) -> dict[str, str]:
     """Return a snapshot of every key-value pair in the database.
+
+    get_all supports optional pagination with page:int and size: int
 
     the database file is loaded automatically on first use.
 
@@ -188,9 +191,20 @@ def get_all() -> dict[str, str]:
         If the database file cannont be loaded.
     """
     _ensure_loaded()
+    
     with cache.lock:
-        return require_db(cache).copy()
+        db = require_db(cache)
+        
+        if page is None or size is None:
+            return db.copy()
 
+        page = max(1, page)
+        size = max(1, size)
+        
+        start = (page - 1) * size
+        stop = start + size
+
+        return dict(islice(db.items(), start, stop))
 
 def get_bulk(keys: Iterable[str]) -> dict[str, str]:
     """Return the values stored under multiple keys.
