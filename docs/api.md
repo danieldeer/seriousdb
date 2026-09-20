@@ -22,7 +22,7 @@ are automatic; neither is exported as a package function (use `seriousdb.api.loa
 | Function | Description |
 | :--- | :--- |
 | `get(key)` | Return the value stored under `key`. <br/>Raises `ResourceNotFoundError` if the key does not exist. |
-| `set(key, value)` | Store `value` under `key`, overwriting any existing value.<br/>Returns the stored value. |
+| `set(key, value, ex=None)` | Store `value` under `key`, overwriting any existing value. Optionally set a TTL using `ex` (in seconds). Returns the stored value. |
 | `delete(key)` | Remove `key` and return its previous value.<br/>Raises `ResourceNotFoundError` if the key does not exist. |
 | `exists(key)` | Return whether `key` exists. |
 | `get_all()` | Return a snapshot of every key-value pair. |
