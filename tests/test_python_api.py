@@ -1,4 +1,5 @@
 import json
+import time
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
@@ -8,7 +9,6 @@ from pytest import MonkeyPatch
 from seriousdb import api
 from seriousdb.exceptions import ResourceNotFoundError
 
-import time 
 
 @pytest.fixture
 def db_file(tmp_path: Path, monkeypatch: MonkeyPatch):
@@ -37,6 +37,7 @@ def test_set_overwrites_existing_key(db_file):
 
     assert api.set("name", "Bob") == "Bob"
     assert api.get("name") == "Bob"
+
 
 def test_get_missing_key_raises(db_file):
     with pytest.raises(ResourceNotFoundError):
@@ -201,6 +202,7 @@ def test_set_ttl_key(db_file):
 
     assert api.get("name") == "Alice"
 
+
 def test_set_ttl_key_delete_after_delay(db_file):
     api.set("name", "Alice", ex=0.5)
 
@@ -214,6 +216,7 @@ def test_set_ttl_key_delete_after_delay(db_file):
 def test_set_invalid_ttl(db_file, ex):
     with pytest.raises(ValueError):
         api.set("name", "Alice", ex=ex)
+
 
 @pytest.mark.parametrize("ex", ["5", True, False])
 def test_set_invalid_ttl_type(db_file, ex):
