@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="124" height="20" role="img" aria-label="version: 0.1.0">
+  <title>version: 0.1.0</title>
+  <linearGradient id="b" x2="0" y2="1">
+    <stop offset="0" stop-color="#bbb" stop-opacity=".1"/>
+    <stop offset="1" stop-opacity=".1"/>
+  </linearGradient>
+  <mask id="a">
+    <rect width="124" height="20" rx="3" fill="#fff"/>
+  </mask>
+  <g mask="url(#a)">
+    <path fill="#555" d="M0 0h52v20H0z"/>
+    <path fill="#007ec6" d="M52 0h72v20H52z"/>
+    <path fill="url(#b)" d="M0 0h124v20H0z"/>
+  </g>
+  <g fill="#fff" text-anchor="middle" font-family="Verdana,Geneva,DejaVu Sans,sans-serif" font-size="11">
+    <text x="26" y="14">version</text>
+    <text x="88" y="14">v0.1.0</text>
+  </g>
+</svg>

@@ -1,0 +1,68 @@
+name: Version Badge
+
+on:
+    push:
+        branches: [main]
+        paths:
+            - VERSION
+            - .github/workflows/version-badge.yml
+    workflow_dispatch:
+
+permissions:
+    contents: write
+
+jobs:
+    update-badge:
+        runs-on: ubuntu-latest
+
+        steps:
+            - name: Check out repository
+              uses: actions/checkout@v4
+
+            - name: Read version from VERSION file
+              id: version
+              run: |
+                  VERSION="$(tr -d '\r\n' < VERSION)"
+                  echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+
+            - name: Generate version badge
+              run: |
+                  mkdir -p .github/badges
+                  VERSION="$(tr -d '\r\n' < VERSION)"
+                  BADGE=.github/badges/version.svg
+
+                  cat > "$BADGE" <<EOF
+                  <svg xmlns="http://www.w3.org/2000/svg" width="124" height="20" role="img" aria-label="version: ${VERSION}">
+                    <title>version: ${VERSION}</title>
+                    <linearGradient id="b" x2="0" y2="1">
+                      <stop offset="0" stop-color="#bbb" stop-opacity=".1"/>
+                      <stop offset="1" stop-opacity=".1"/>
+                    </linearGradient>
+                    <mask id="a">
+                      <rect width="124" height="20" rx="3" fill="#fff"/>
+                    </mask>
+                    <g mask="url(#a)">
+                      <path fill="#555" d="M0 0h52v20H0z"/>
+                      <path fill="#007ec6" d="M52 0h72v20H52z"/>
+                      <path fill="url(#b)" d="M0 0h124v20H0z"/>
+                    </g>
+                    <g fill="#fff" text-anchor="middle" font-family="Verdana,Geneva,DejaVu Sans,sans-serif" font-size="11">
+                      <text x="26" y="14">version</text>
+                      <text x="88" y="14">v${VERSION}</text>
+                    </g>
+                  </svg>
+                  EOF
+
+            - name: Commit updated badge
+              run: |
+                  git config user.name "github-actions[bot]"
+                  git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+                  git add .github/badges/version.svg
+
+                  if git diff --cached --quiet; then
+                    echo "No badge changes to commit."
+                    exit 0
+                  fi
+
+                  git commit -m "chore: update version badge"
+                  git push

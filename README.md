@@ -1,5 +1,10 @@
 ![seriousdb logo](https://i.imgur.com/ztPW7ZI.png)
 
+[![CI](https://github.com/danieldeer/seriousdb/actions/workflows/tests.yml/badge.svg)](https://github.com/danieldeer/seriousdb/actions/workflows/tests.yml)
+[![Version](https://img.shields.io/badge/version-0.1.0-blue.svg)](https://github.com/danieldeer/seriousdb/releases)
+[![Python](https://img.shields.io/badge/Python-3.11%20%7C%203.12%20%7C%203.13-3776AB.svg)](https://www.python.org/)
+[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+
 # seriousdb - A seriously simple database
 
 `seriousdb` is a small, simple key-value database you import directly into your Python project. It
