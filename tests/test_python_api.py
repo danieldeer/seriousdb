@@ -74,6 +74,23 @@ def test_get_all_returns_all_key_value_pairs(db_file):
     }
 
 
+def test_get_all_pagination(db_file):
+    for i in range(1, 16):
+        api.set(f"key_{i}", f"val_{i}")
+
+    page_1 = api.get_all(page=1, size=10)
+    assert len(page_1) == 10
+    assert list(page_1.keys())[0] == "key_1"
+    assert list(page_1.keys())[-1] == "key_10"
+
+    page_2 = api.get_all(page=2, size=10)
+    assert len(page_2) == 5
+    assert list(page_2.keys())[0] == "key_11"
+    assert list(page_2.keys())[-1] == "key_15"
+
+    assert api.get_all(page=3, size=10) == {}
+
+
 def test_get_bulk_returns_existing_keys_only(db_file):
     api.set("name", "Daniel")
     api.set("language", "Python")
