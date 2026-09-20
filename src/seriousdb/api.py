@@ -8,10 +8,11 @@ All functions are thread-safe.
 
 from collections.abc import Iterable
 from pathlib import Path
-from threading import Lock
+from threading import Lock, Timer
 
 from .cache import Cache, require_db
 from .config import DB_FILE
+from .common import _validate_ttl
 
 __all__ = [
     "count",
@@ -96,7 +97,7 @@ def get(key: str) -> str:
     return cache.select(key)
 
 
-def set(key: str, value: str) -> str:
+def set(key: str, value: str, ex: float | None = None ) -> str:
     """Store `value` under `key`, overwriting any existing value.
 
     The change is flushed to the database file before the function returns.
@@ -107,7 +108,8 @@ def set(key: str, value: str) -> str:
         Key to store the value under.
     value: str
         Value to store
-
+    ex: float | None 
+        Time-to-live (TTL) in seconds. If None, the key does not expire.
     Returns
     -------
     str
@@ -118,9 +120,17 @@ def set(key: str, value: str) -> str:
     OSError
         If the database file cannont be loaded or written.
     """
+    
+    _validate_ttl(ex)
     _ensure_loaded()
     value, _ = cache.insert(key, value)
     cache.flush()
+
+    if ex: 
+        timer = Timer(ex, delete, [key])
+        timer.daemon = True
+        timer.start()
+
     return value
 
 
@@ -237,3 +247,9 @@ def count() -> int:
     _ensure_loaded()
     with cache.lock:
         return len(require_db(cache))
+
+
+
+set("name" , "mohamed") 
+
+print(get("name"))
