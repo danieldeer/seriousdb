@@ -1,5 +1,4 @@
 import json
-import os
 from pathlib import Path
 
 import pytest
@@ -12,24 +11,17 @@ def boom(*args, **kwargs):
     raise RuntimeError("simulated crash mid-flush")
 
 
-def test_write_default_uses_fsync(tmp_path: Path, monkeypatch: MonkeyPatch):
+def test_write_default_failure_does_not_create_destination(
+    tmp_path: Path, monkeypatch: MonkeyPatch
+):
     db_file = tmp_path / ".sdb"
-    fsync_calls: list[int] = []
-    real_fsync = os.fsync
-
-    def tracking_fsync(fd: int) -> None:
-        fsync_calls.append(fd)
-        real_fsync(fd)
-
-    monkeypatch.setattr(os, "fsync", tracking_fsync)
+    monkeypatch.setattr(json, "dumps", boom)
 
     cache = Cache()
-    cache.load(str(db_file))
+    with pytest.raises(RuntimeError):
+        cache.load(str(db_file))
 
-    assert fsync_calls, "expected fsync when creating a new empty database"
-    assert db_file.exists()
-    assert json.loads(db_file.read_bytes()) == {}
-    assert cache.db == {}
+    assert not db_file.exists()
 
 
 def test_flush_failure_does_not_corrupt_existing_file(

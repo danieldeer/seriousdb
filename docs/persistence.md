@@ -22,5 +22,6 @@ permission failures can still prevent loading.
 - Separate `Cache` instances and separate processes have independent data and locks. Concurrent
   writes to the same file from more than one of them are not coordinated and can overwrite each
   other's changes.
-- Writes overwrite the file directly without atomic replacement or `fsync`. A crash can lose data or
-  leave an incomplete file. A failed flush does not roll back the in-memory change.
+- Writes use a temp file, `fsync`, then atomic replace onto the destination. A crash during the write
+  should not leave a truncated destination file, but durability still depends on the OS and disk. A
+  failed flush does not roll back the in-memory change.
