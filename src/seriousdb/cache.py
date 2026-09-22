@@ -192,20 +192,22 @@ class Cache:
             if self.db is None or self.filename is None:
                 logger.error("Cannot flush database: database is not loaded")
                 return
-            dir_name: str = os.path.dirname(self.filename) or "."
-            with tempfile.NamedTemporaryFile(
-                "wb", dir=dir_name, delete=False
-            ) as tmp_file:
-                tmp_file.write(json.dumps(self.db).encode())
-                tmp_file.flush()
-                os.fsync(tmp_file.fileno())
-            os.replace(tmp_file.name, self.filename)
+            _atomic_write_json(self.filename, self.db)
+
+
+def _atomic_write_json(filename: str, data: dict[str, str]) -> None:
+    dir_name: str = os.path.dirname(filename) or "."
+    with tempfile.NamedTemporaryFile("wb", dir=dir_name, delete=False) as tmp_file:
+        tmp_file.write(json.dumps(data).encode())
+        tmp_file.flush()
+        os.fsync(tmp_file.fileno())
+    os.replace(tmp_file.name, filename)
 
 
 def _write_default(filename: str) -> dict[str, str]:
-    with open(filename, "wb") as f:
-        f.write(json.dumps(DEFAULT_DB).encode())
-    return dict(DEFAULT_DB)
+    db = dict(DEFAULT_DB)
+    _atomic_write_json(filename, db)
+    return db
 
 
 def _generate_corrupt_backup_path(filename: str) -> str:
