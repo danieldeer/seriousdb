@@ -10,6 +10,7 @@ import logging
 import os
 import tempfile
 import time
+from collections.abc import Callable
 from threading import Lock
 
 from .exceptions import ResourceNotFoundError, ServiceUnavailableError
@@ -93,10 +94,8 @@ class Cache:
             If no database has been loaded.
         """
         with self.lock:
-            val = require_db(self).get(key, None)
-        if val is None:
-            logger.debug("Key not found: %s", key)
-            raise ResourceNotFoundError(f"No value set for key {key}")
+            db = require_db(self)
+            val = _safe_key_error_handler(lambda: db[key])
         return val
 
     def delete(self, key: str) -> str:
@@ -122,10 +121,8 @@ class Cache:
             If no database has been loaded.
         """
         with self.lock:
-            val = require_db(self).pop(key, None)
-        if val is None:
-            logger.debug("Key not found: %s", key)
-            raise ResourceNotFoundError(f"No value set for key {key}")
+            db = require_db(self)
+            val = _safe_key_error_handler(lambda: db.pop(key))
         return val
 
     def load(self, filename: str) -> None:
@@ -232,6 +229,31 @@ def _generate_corrupt_backup_path(filename: str) -> str:
     while os.path.lexists(f"{base}-{counter}"):
         counter += 1
     return f"{base}-{counter}"
+
+
+def _safe_key_error_handler(callback: Callable[[], str]) -> str:
+    """Safely handle a key error by raising a ResourceNotFoundError and logging the event.
+
+    Parameters
+    ----------
+    callback : Callable[[], str]
+        A callable that attempts to retrieve a value from a dictionary.
+
+    Returns
+    -------
+    str
+        The value retrieved by the callback.
+
+    Raises
+    ------
+    ResourceNotFoundError
+        If the callback raises a KeyError, indicating that the key was not found in the dictionary.
+    """
+    try:
+        return callback()
+    except KeyError as e:
+        logger.debug("Key not found: %s", e)
+        raise ResourceNotFoundError(f"No value set for key {e}") from e
 
 
 def require_db(cache: Cache) -> dict[str, str]:
