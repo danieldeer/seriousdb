@@ -24,7 +24,10 @@ def test_load_and_read_by_key(
     entries: Entries,
     measured_rounds: int,
 ) -> None:
-    """Measure opening the file and reading every key as one user operation."""
+    """Measure loading a fresh Cache and looking up every key.
+
+    File creation and result checks are untimed. The OS may cache the file.
+    """
     # File creation belongs to setup, so it happens once before benchmarking.
     write_database(database_file, entries)
     values: list[str] = []
@@ -60,7 +63,11 @@ def test_load_file(
     entries: Entries,
     measured_rounds: int,
 ) -> None:
-    """Measure reading and deserializing a database file without key lookups."""
+    """Measure creating a Cache and loading the database file.
+
+    File creation, key lookups and count checks are untimed. The OS may cache
+    the file even though each round uses a fresh application cache.
+    """
     filename = loaded_cache.filename
     assert filename is not None
     cache: Cache | None = None
@@ -91,7 +98,10 @@ def test_resident_read(
     entries: Entries,
     measured_rounds: int,
 ) -> None:
-    """Measure reading every key after the database is already in memory."""
+    """Measure key lookups from an already loaded Cache.
+
+    File creation, loading and result checks are untimed.
+    """
     values: list[str] = []
     expected = [value for _, value in entries]
 

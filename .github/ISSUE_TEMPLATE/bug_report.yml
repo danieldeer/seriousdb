@@ -21,10 +21,10 @@ body:
     id: reproduction
     attributes:
       label: Steps to reproduce
-      description: Include the startup command and requests or actions that trigger the problem. If it is intermittent, describe what you know so far.
+      description: Include the code or API calls that trigger the problem. If it is intermittent, describe what you know so far.
       placeholder: |
-        1. Start seriousdb with ...
-        2. Send the request ...
+        1. Load the database with ...
+        2. Call ...
         3. Observe ...
     validations:
       required: true
@@ -44,7 +44,7 @@ body:
         seriousdb version or commit:
         Python version:
         Operating system:
-        Installation method (uv, Docker, Nix, or other):
+        Installation method (uv, Nix, or other):
   - type: textarea
     id: context
     attributes:

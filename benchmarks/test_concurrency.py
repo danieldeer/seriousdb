@@ -30,7 +30,12 @@ def test_shared_cache_threads(
     measured_rounds: int,
     workers: int,
 ) -> None:
-    """Measure threads running disjoint parts of one workload on a shared cache."""
+    """Measure scheduling and contention on a Cache shared by threads.
+
+    Split a fixed workload of 90% reads and 10% overwrites across threads. Timing
+    includes submission, synchronization and waiting for results; threads start
+    during warmup. Resets, result checks and the final persistence check are untimed.
+    """
     # Slicing distributes every nth operation to a worker without duplicating work.
     operations = mixed_operations(entries)
     chunks = [operations[index::workers] for index in range(workers)]

@@ -1,10 +1,21 @@
 """Fault injection for benchmark checks, without timing or optional plugins."""
 
+import json
+from contextlib import nullcontext
 from inspect import signature
+from types import SimpleNamespace
 
 import pytest
 
-from benchmarks import test_concurrency, test_persistence, test_reads, test_workloads
+from benchmarks import (
+    _processes,
+    test_concurrency,
+    test_persistence,
+    test_processes,
+    test_reads,
+    test_workloads,
+)
+from benchmarks._processes import WorkerResult
 from benchmarks._support import load_cache, make_entries, write_database
 from seriousdb.cache import Cache
 
@@ -76,6 +87,147 @@ def test_every_round_rejects_wrong_read_results(
     with pytest.raises(AssertionError):
         test(**{name: arguments[name] for name in signature(test).parameters})
     assert calls == bad_call
+
+
+@pytest.mark.parametrize("mode", ["load-and-read", "resident-read"])
+@pytest.mark.parametrize("fault", ["value", "count", "pid", "file"])
+@pytest.mark.parametrize(
+    ("bad_call", "disabled"),
+    [(1, False), (2, False), (3, False), (4, False), (1, True)],
+)
+def test_process_reads_verify_every_round(
+    tmp_path, monkeypatch, mode, fault, bad_call, disabled
+):
+    path = tmp_path / "benchmark.json"
+    entries = make_entries(10, 32)
+    calls = 0
+
+    def run(_pool, database_file, chunks, operation):
+        nonlocal calls
+        if operation in ("ready", "preload"):
+            return []
+        calls += 1
+        results = [
+            WorkerResult(i, [value for _, value in chunk], len(entries))
+            for i, chunk in enumerate(chunks)
+        ]
+        if calls == bad_call:
+            if fault == "value":
+                results[0].values[0] = "wrong value"
+            elif fault == "count":
+                results[0] = results[0]._replace(key_count=len(entries) + 1)
+            elif fault == "pid":
+                results[0] = results[0]._replace(pid=results[1].pid)
+            else:
+                database_file.write_text("{}", encoding="utf-8")
+        return results
+
+    monkeypatch.setattr(_processes, "process_pool", lambda _: nullcontext())
+    monkeypatch.setattr(_processes, "run_workers", run)
+    with pytest.raises(AssertionError):
+        test_processes.test_process_reads(Rounds(disabled), path, entries, 3, 2, mode)
+    assert calls == bad_call
+
+
+@pytest.mark.parametrize("disabled", [False, True])
+@pytest.mark.parametrize("processes", [1, 2])
+@pytest.mark.parametrize("persisted", [b"{}", b"not JSON", b"\xff"])
+def test_process_write_failures_are_reported(
+    tmp_path, monkeypatch, disabled, processes, persisted
+):
+    path = tmp_path / "benchmark.json"
+    entries = make_entries(10, 32)
+    benchmark = Rounds(disabled)
+    request = SimpleNamespace(config=SimpleNamespace(getoption=lambda _: True))
+
+    def run(_pool, database_file, chunks, mode):
+        if mode == "ready":
+            return []
+        assert load_cache(str(database_file)).db == dict(entries)
+        database_file.write_bytes(persisted)
+        return [
+            WorkerResult(i, [value for _, value in chunk], len(entries))
+            for i, chunk in enumerate(chunks)
+        ]
+
+    monkeypatch.setattr(_processes, "process_pool", lambda _: nullcontext())
+    monkeypatch.setattr(_processes, "run_workers", run)
+    failure = pytest.fail.Exception if processes == 1 else pytest.xfail.Exception
+    with pytest.raises(failure):
+        test_processes.test_process_writes(
+            benchmark, path, entries, 3, processes, request
+        )
+    assert path.read_bytes() == persisted
+    if processes > 1:
+        assert benchmark.extra_info["correctness"] == "failed"
+        assert benchmark.extra_info["persistence_failures"]
+
+
+@pytest.mark.parametrize("processes", [1, 2])
+@pytest.mark.parametrize("disabled", [False, True])
+def test_process_write_conflicts_are_reported_even_when_file_is_correct(
+    tmp_path, monkeypatch, processes, disabled
+):
+    entries = make_entries(10, 32)
+    benchmark = Rounds(disabled)
+    request = SimpleNamespace(config=SimpleNamespace(getoption=lambda _: True))
+
+    def run(_pool, path, chunks, mode):
+        if mode == "ready":
+            return []
+        path.write_text(json.dumps(dict(item for chunk in chunks for item in chunk)))
+        return [
+            WorkerResult(
+                i,
+                [value for _, value in chunk],
+                len(entries),
+                "atomic replacement conflict (WinError 5)",
+            )
+            for i, chunk in enumerate(chunks)
+        ]
+
+    monkeypatch.setattr(_processes, "process_pool", lambda _: nullcontext())
+    monkeypatch.setattr(_processes, "run_workers", run)
+    failure = pytest.fail.Exception if processes == 1 else pytest.xfail.Exception
+    with pytest.raises(failure, match="atomic replacement conflict"):
+        test_processes.test_process_writes(
+            benchmark, tmp_path / "database.json", entries, 3, processes, request
+        )
+    if processes > 1:
+        assert benchmark.extra_info["correctness"] == "failed"
+        assert benchmark.extra_info["persistence_failures"] == [
+            "atomic replacement conflict (WinError 5)"
+        ]
+
+
+@pytest.mark.parametrize("entry_count", [10, 150])
+def test_process_api_writes_bound_work_and_preserve_other_keys(
+    tmp_path, monkeypatch, entry_count
+):
+    entries = make_entries(entry_count, 32)
+    benchmark = Rounds(True)
+    request = SimpleNamespace(config=SimpleNamespace(getoption=lambda _: True))
+
+    def run(_pool, path, chunks, mode):
+        if mode == "ready":
+            return []
+        assert sum(map(len, chunks)) == min(100, entry_count)
+        persisted = json.loads(path.read_bytes())
+        persisted.update(item for chunk in chunks for item in chunk)
+        path.write_text(json.dumps(persisted))
+        return [
+            WorkerResult(i, [value for _, value in chunk], entry_count)
+            for i, chunk in enumerate(chunks)
+        ]
+
+    monkeypatch.setattr(_processes, "process_pool", lambda _: nullcontext())
+    monkeypatch.setattr(_processes, "run_workers", run)
+    test_processes.test_process_writes(
+        benchmark, tmp_path / "database.json", entries, 1, 2, request
+    )
+    assert benchmark.extra_info["writes"] == min(100, entry_count)
+    assert benchmark.extra_info["flush_every"] == 1
+    assert benchmark.extra_info["correctness"] == "passed"
 
 
 @pytest.mark.parametrize(

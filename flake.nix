@@ -22,10 +22,7 @@
 
           python = pkgs.python314.withPackages (
             pythonPackages: with pythonPackages; [
-              fastapi
-              fastapi-cli
               python-dotenv
-              uvicorn
 
               pytest
               pytest-benchmark

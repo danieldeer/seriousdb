@@ -9,7 +9,7 @@ Entries = tuple[tuple[str, str], ...]
 Operations = list[tuple[str, str, str]]
 RANDOM_SEED = 212
 WARMUP_ROUNDS = 1
-WORKLOAD_VERSION = 5
+WORKLOAD_VERSION = 6
 
 
 def make_entries(count: int, value_bytes: int) -> Entries:

@@ -7,13 +7,12 @@ before importing `seriousdb` if needed; do not rely on automatic discovery.
 
 ## Configuring environment variables (for Users)
 
-Set variables before importing `seriousdb` or starting the server; settings are read when the
-configuration module is imported. Environment variables take precedence over `.env` values; missing
-settings use their defaults.
+Set variables before importing `seriousdb`. Settings are read when the configuration module is
+imported. Environment variables take precedence over `.env` values; missing settings use their
+defaults.
 
-`SERIOUSDB_DB_FILE` selects the database path. `SERIOUSDB_HOST` and `SERIOUSDB_PORT` configure
-`run.py`; direct Uvicorn commands, including the Docker image's command, use their own host and port
-arguments.
+`SERIOUSDB_DB_FILE` selects the database path used when `load()` is called without a filename.
+`SERIOUSDB_LOG_LEVEL` sets the minimum level of log messages written to standard output.
 
 See the [configuration table](../README.md#configuration) for names and defaults.
 

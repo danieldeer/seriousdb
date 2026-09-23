@@ -25,7 +25,11 @@ def test_mixed_resident(
     entries: Entries,
     measured_rounds: int,
 ) -> None:
-    """Measure a shuffled in-memory workload of 90% reads and 10% overwrites."""
+    """Measure a shuffled in-memory workload of 90% reads and 10% overwrites.
+
+    Run one operation per entry. Resetting values, checking results and the final
+    flush and reopen check are untimed.
+    """
     operations = mixed_operations(entries)
     expected = expected_state(entries, operations)
     expected_reads = [value for action, _, value in operations if action == "read"]

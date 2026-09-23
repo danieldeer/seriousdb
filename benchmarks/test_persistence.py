@@ -23,7 +23,10 @@ def test_batch_write_and_persist(
     entries: Entries,
     measured_rounds: int,
 ) -> None:
-    """Measure creating a database, inserting every entry, and flushing once."""
+    """Measure creating a database, inserting every entry, and flushing once.
+
+    File removal and verification of the reopened database are untimed.
+    """
 
     def prepare_database():
         """Remove the last round's file before the next timer starts."""
@@ -53,7 +56,11 @@ def test_flush(
     entries: Entries,
     measured_rounds: int,
 ) -> None:
-    """Measure serializing and flushing an already loaded cache to its file."""
+    """Measure only Cache.flush on an already populated cache.
+
+    Change one value before each round and verify the reopened file afterward,
+    both outside timing. Flush includes serialization, fsync and file replacement.
+    """
     expected = dict(entries)
     changed_key = entries[0][0]
 
@@ -95,7 +102,10 @@ def test_update_and_persist(
     measured_rounds: int,
     flush_every: int,
 ) -> None:
-    """Measure 100 overwrites with either one flush per write or one per batch."""
+    """Measure 100 overwrites with either one flush per write or one per batch.
+
+    Restoring original values and checking the cache and reopened file are untimed.
+    """
     # A fixed operation count isolates the cost of the existing database size.
     originals = entries[:100]
     updates = tuple((key, value[::-1]) for key, value in originals)

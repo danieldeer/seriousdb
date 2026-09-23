@@ -39,10 +39,28 @@ def pytest_addoption(parser):
         default=5,
         help="Measured rounds per scenario (default: 5).",
     )
+    group.addoption(
+        "--process-counts",
+        type=_positive_int,
+        nargs="+",
+        default=[1, 2, 4, 8],
+        help="Process counts for multi-process benchmarks (default: 1 2 4 8).",
+    )
+    group.addoption(
+        "--multiprocess-writes",
+        action="store_true",
+        help="Include experimental shared-file writes; data loss is an expected failure.",
+    )
 
 
 def pytest_generate_tests(metafunc):
     """Run every benchmark that requests entries against each selected dataset."""
+    if "processes" in metafunc.fixturenames:
+        metafunc.parametrize(
+            "processes",
+            metafunc.config.getoption("--process-counts"),
+            ids=lambda n: f"{n}-processes",
+        )
     if "entries" not in metafunc.fixturenames:
         return
     datasets = DEFAULT_DATASETS.copy()
