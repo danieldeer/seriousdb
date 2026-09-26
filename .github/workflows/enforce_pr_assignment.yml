@@ -1,0 +1,247 @@
+name: Enforce PR assignment
+
+on:
+  pull_request_target:
+    types:
+      - opened
+      - reopened
+      - edited
+      - synchronize
+      - labeled
+      - ready_for_review
+
+permissions:
+  issues: write
+  pull-requests: write
+
+concurrency:
+  group: pr-assignment-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  enforce:
+    name: Check linked issue assignment
+    if: github.event.pull_request.draft == false
+    runs-on: ubuntu-slim
+    timeout-minutes: 15
+    steps:
+      - name: Check assignment after the grace period
+        uses: actions/github-script@v8 # v8
+        with:
+          script: |
+            const gracePeriodMilliseconds = 10 * 60 * 1000;
+            const pullRequestCreatedAt = Date.parse(
+              context.payload.pull_request.created_at,
+            );
+            const remainingGracePeriod = Math.max(
+              0,
+              gracePeriodMilliseconds - (Date.now() - pullRequestCreatedAt),
+            );
+
+            if (remainingGracePeriod > 0) {
+              core.info(
+                `Waiting ${Math.ceil(remainingGracePeriod / 1000)} seconds ` +
+                  "before checking the pull request.",
+              );
+              await new Promise((resolve) =>
+                setTimeout(resolve, remainingGracePeriod),
+              );
+            }
+
+            const result = await github.graphql(
+              `query($owner: String!, $repo: String!, $number: Int!) {
+                repository(owner: $owner, name: $repo) {
+                  pullRequest(number: $number) {
+                    state
+                    isDraft
+                    authorAssociation
+                    author {
+                      login
+                    }
+                    labels(first: 100) {
+                      nodes {
+                        name
+                      }
+                    }
+                    closingIssuesReferences(first: 100) {
+                      nodes {
+                        number
+                        repository {
+                          nameWithOwner
+                        }
+                        assignees(first: 10) {
+                          nodes {
+                            login
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }`,
+              {
+                ...context.repo,
+                number: context.issue.number,
+              },
+            );
+
+            const pullRequest = result.repository.pullRequest;
+            if (
+              !pullRequest ||
+              pullRequest.state !== "OPEN" ||
+              pullRequest.isDraft
+            ) {
+              core.info("The pull request no longer needs to be checked.");
+              return;
+            }
+
+            const repository = `${context.repo.owner}/${context.repo.repo}`;
+            const author = pullRequest.author?.login;
+            if (!author) {
+              core.info("The pull request has no active author account.");
+              return;
+            }
+
+            const requiredLabel = "needs-assignment";
+            const exemptionLabel = "no-assignment-needed";
+            const labels = new Set(
+              pullRequest.labels.nodes.map((label) => label.name),
+            );
+            const maintainerAssociations = new Set([
+              "OWNER",
+              "MEMBER",
+              "COLLABORATOR",
+            ]);
+
+            const linkedIssues =
+              pullRequest.closingIssuesReferences.nodes.filter(
+                (issue) => issue.repository.nameWithOwner === repository,
+              );
+            const hasAssignedIssue = linkedIssues.some((issue) =>
+              issue.assignees.nodes.some(
+                (assignee) =>
+                  assignee.login.toLowerCase() === author.toLowerCase(),
+              ),
+            );
+            const isExempt =
+              maintainerAssociations.has(pullRequest.authorAssociation) ||
+              labels.has(exemptionLabel);
+
+            if (isExempt || hasAssignedIssue) {
+              if (labels.has(requiredLabel)) {
+                await github.rest.issues.removeLabel({
+                  ...context.repo,
+                  issue_number: context.issue.number,
+                  name: requiredLabel,
+                });
+              }
+              core.info("The pull request meets the assignment policy.");
+              return;
+            }
+
+            const ensureLabel = async (name, color, description) => {
+              try {
+                await github.rest.issues.getLabel({
+                  ...context.repo,
+                  name,
+                });
+              } catch (error) {
+                if (error.status !== 404) {
+                  throw error;
+                }
+
+                try {
+                  await github.rest.issues.createLabel({
+                    ...context.repo,
+                    name,
+                    color,
+                    description,
+                  });
+                } catch (createError) {
+                  if (createError.status !== 422) {
+                    throw createError;
+                  }
+
+                  await github.rest.issues.getLabel({
+                    ...context.repo,
+                    name,
+                  });
+                }
+              }
+            };
+
+            await ensureLabel(
+              requiredLabel,
+              "fbca04",
+              "The PR author must be assigned to a linked issue",
+            );
+            await ensureLabel(
+              exemptionLabel,
+              "0e8a16",
+              "Issue assignment is not required for this PR",
+            );
+
+            if (!labels.has(requiredLabel)) {
+              await github.rest.issues.addLabels({
+                ...context.repo,
+                issue_number: context.issue.number,
+                labels: [requiredLabel],
+              });
+            }
+
+            const reason =
+              linkedIssues.length === 0
+                ? "it does not link a repository issue using a closing " +
+                  "reference such as `Closes #123`"
+                : "you are not assigned to any of its linked issues";
+            const contributionGuide =
+              `https://github.com/${repository}/blob/main/` +
+              "docs/contributing.md#issues-and-prs";
+            const commentMarker = "<!-- pr-assignment-policy -->";
+            const commentBody = [
+              commentMarker,
+              `Thanks for the contribution, @${author}.`,
+              "",
+              `This pull request does not meet the assignment policy because ` +
+                `${reason}.`,
+              "",
+              "Please read the " +
+                `[contribution guide](${contributionGuide}), request ` +
+                "assignment on the issue, and then edit this pull request or " +
+                "push a commit to run the check again.",
+              "",
+              "If you believe this was flagged incorrectly, please contact " +
+                "a maintainer. Maintainers can apply the " +
+                `\`${exemptionLabel}\` label when assignment is not required.`,
+            ].join("\n");
+            const comments = await github.paginate(
+              github.rest.issues.listComments,
+              {
+                ...context.repo,
+                issue_number: context.issue.number,
+                per_page: 100,
+              },
+            );
+            const existingComment = comments.find(
+              (comment) =>
+                comment.user?.type === "Bot" &&
+                comment.body?.includes(commentMarker),
+            );
+
+            if (!existingComment) {
+              await github.rest.issues.createComment({
+                ...context.repo,
+                issue_number: context.issue.number,
+                body: commentBody,
+              });
+            } else if (existingComment.body !== commentBody) {
+              await github.rest.issues.updateComment({
+                ...context.repo,
+                comment_id: existingComment.id,
+                body: commentBody,
+              });
+            }
+
+            core.setFailed(
+              "The pull request does not meet the issue assignment policy.",
+            );
