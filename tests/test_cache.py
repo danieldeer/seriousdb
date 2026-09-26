@@ -224,11 +224,14 @@ def test_insert_succeeds_when_compaction_fails(db_path, monkeypatch):
 
     assert cache.db is not None
 
-    def boom():
+    for index in range(COMPACTION_THRESHOLD - 1):
+        cache.insert(f"key-{index}", str(index))
+
+    def boom(_data):
         raise OSError("simulated disk-full during compaction")
 
-    monkeypatch.setattr(cache, "_compact", boom)
-    monkeypatch.setattr(cache, "_writes_since_compact", COMPACTION_THRESHOLD)
+    assert cache._persistence is not None
+    monkeypatch.setattr(cache._persistence, "_compact", boom)
 
     value, is_new_key = cache.insert("name", "Alice")
 
@@ -389,15 +392,22 @@ def test_compact_failure_does_not_corrupt_existing_snapshot(db_path, monkeypatch
     cache = Cache()
     cache.load(str(db_path))
     cache.insert("name", "Alice")
-    cache._compact()
+    assert cache._persistence is not None
+    assert cache.db is not None
+    with cache.lock, cache._persistence.write_state(cache.db) as state:
+        cache._persistence._compact(state.data)
     original_content = db_path.read_bytes()
 
     cache.insert("name", "Bob")
 
     monkeypatch.setattr(json, "dumps", boom)
 
-    with pytest.raises(RuntimeError):
-        cache._compact()
+    with (
+        cache.lock,
+        cache._persistence.write_state(cache.db) as state,
+        pytest.raises(RuntimeError),
+    ):
+        cache._persistence._compact(state.data)
 
     assert db_path.read_bytes() == original_content
 
@@ -410,7 +420,7 @@ def test_load_corrupt_backup_collision_preserves_backups(db_path, monkeypatch):
     db_path.write_bytes(first_payload)
 
     fixed_timestamp = 1700000000.0
-    monkeypatch.setattr("seriousdb.cache.time.time", lambda: fixed_timestamp)
+    monkeypatch.setattr("seriousdb.persistence.time.time", lambda: fixed_timestamp)
 
     cache = Cache()
     cache.load(str(db_path))
@@ -440,7 +450,7 @@ def test_load_corrupt_backup_collision_preserves_backups(db_path, monkeypatch):
 def test_load_corrupt_backup_with_existing_collision_suffixes(db_path, monkeypatch):
     """Recovery picks the next free numeric suffix when earlier ones exist."""
     fixed_timestamp = 1700000000.0
-    monkeypatch.setattr("seriousdb.cache.time.time", lambda: fixed_timestamp)
+    monkeypatch.setattr("seriousdb.persistence.time.time", lambda: fixed_timestamp)
 
     existing_backups = [
         db_path.parent / f"{db_path.name}.corrupt-{int(fixed_timestamp)}",

@@ -108,6 +108,8 @@ class WriteAheadLog:
         """
         self._repair_torn_tail()
         with open(self.filename, "ab") as f:
+            if self._offset == 0:
+                _sync_parent_directory(self.filename)
             data = (json.dumps(entry.to_dict()) + "\n").encode()
             f.write(data)
             f.flush()
@@ -177,14 +179,21 @@ class WriteAheadLog:
             If the temporary or final files cannot be written.
         """
         dir_name = os.path.dirname(self.filename) or "."
-        with tempfile.NamedTemporaryFile("wb", dir=dir_name, delete=False) as tmp_file:
-            pass
+        temp_name = None
         try:
-            os.replace(tmp_file.name, self.filename)
-        except OSError:
-            os.unlink(tmp_file.name)
+            with tempfile.NamedTemporaryFile(
+                "wb", dir=dir_name, delete=False
+            ) as tmp_file:
+                temp_name = tmp_file.name
+                tmp_file.flush()
+                os.fsync(tmp_file.fileno())
+            os.replace(temp_name, self.filename)
+        except Exception:
+            if temp_name is not None and os.path.lexists(temp_name):
+                os.unlink(temp_name)
             raise
         self._offset = 0
+        _sync_parent_directory(self.filename)
 
     def _repair_torn_tail(self) -> None:
         """Truncate any bytes left by a previous failed write.
@@ -202,3 +211,15 @@ class WriteAheadLog:
         if actual_size > self._offset:
             with open(self.filename, "r+b") as f:
                 f.truncate(self._offset)
+
+
+def _sync_parent_directory(filename: str) -> None:
+    """Persist a created or replaced file's directory entry on POSIX."""
+    if os.name == "nt":
+        return
+    dir_name = os.path.dirname(filename) or "."
+    fd = os.open(dir_name, os.O_RDONLY)
+    try:
+        os.fsync(fd)
+    finally:
+        os.close(fd)

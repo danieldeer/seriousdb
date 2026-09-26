@@ -76,7 +76,7 @@ class TestCacheLogging:
         db_path.write_bytes(b"this is not json!!!")
 
         cache = Cache()
-        with caplog.at_level(logging.WARNING, logger="seriousdb.cache"):
+        with caplog.at_level(logging.WARNING, logger="seriousdb.persistence"):
             cache.load(str(db_path))
 
         assert any(
