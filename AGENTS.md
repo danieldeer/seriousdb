@@ -46,4 +46,4 @@ Usage of AI tooling to create an implementation of a feature or fix a bug, will 
 
 The above list is again not exhaustive.
 
-[^1]: It's okay if your first language isn't English. It's preferable to also include the original text alongside the translation
+\[^1\]: It's okay if your first language isn't English. It's preferable to also include the original text alongside the translation

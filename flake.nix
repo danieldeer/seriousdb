@@ -28,6 +28,8 @@
               pytest-benchmark
               ruff
               ty
+              mdformat
+              mdformat-gfm
             ]
           );
         in

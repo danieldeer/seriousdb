@@ -32,3 +32,6 @@ jobs:
 
       - name: Check formatting
         run: uv run ruff format --check .
+
+      - name: Check markdown formatting
+        run: uv run --locked mdformat --check $(git ls-files '*.md' ':!docs/reference/**')

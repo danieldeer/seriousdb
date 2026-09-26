@@ -17,6 +17,7 @@ PRs that skip this process may be closed without review.
 ## Before opening a PR
 
 - Format the Python code — see [Formatting](development.md#formatting).
+- Format Markdown files — see [Markdown formatting](development.md#markdown-formatting).
 - Follow the [docstring conventions](development.md#docstrings).
 - If you add or change a public function, add or adjust tests to
   cover the new behavior, and [regenerate the generated reference](development.md#documentation) —
