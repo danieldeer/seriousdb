@@ -22,7 +22,7 @@ uv run --locked --group benchmark -m benchmarks -k "process_reads and 1000x32B"
 ```
 
 | Option                    | Effect                                  |
-|---------------------------|-----------------------------------------|
+| ------------------------- | --------------------------------------- |
 | `--extended`              | Include larger datasets.                |
 | `--engine-rounds=20`      | Set the number of measured rounds.      |
 | `--process-counts 1 4 16` | Choose process counts.                  |

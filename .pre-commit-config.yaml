@@ -49,6 +49,14 @@ repos:
         always_run: true
         stages: [pre-commit]
 
+      - id: uv-mdformat
+        name: mdformat
+        entry: uv run --locked mdformat --check
+        language: system
+        types: [markdown]
+        exclude: ^docs/reference/
+        stages: [pre-commit]
+
       - id: docs-reference
         name: docs-reference
         entry: uv run --locked --group docs scripts/docs-reference.py --check

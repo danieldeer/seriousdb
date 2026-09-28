@@ -85,6 +85,60 @@ uv run ruff format --check .
 ruff format --check .
 ```
 
+## Markdown formatting
+
+Markdown files are formatted with [`mdformat`](https://github.com/hukkin/mdformat)
+(GFM tables and task lists via
+[`mdformat-gfm`](https://github.com/hukkin/mdformat-gfm)).
+Both are pinned in the `dev` dependency group because the formatting style may
+change between versions.
+
+### Format Markdown files with `mdformat`:
+
+Tracked Markdown files only (`git ls-files` skips ignored files such as
+`.pytest_cache/README.md`, which a bare `mdformat .` would pick up after a
+test run). Generated files under `docs/reference/` are excluded:
+they are owned by `scripts/docs-reference.py`, which has its own
+staleness check.
+
+#### uv (bash)
+
+```bash
+uv run --locked mdformat $(git ls-files '*.md' ':!docs/reference/**')
+```
+
+#### uv (PowerShell)
+
+```powershell
+uv run --locked mdformat (git ls-files '*.md' ':!docs/reference/**')
+```
+
+### Nix (in Nix Shell)
+
+```bash
+mdformat $(git ls-files '*.md' ':!docs/reference/**')
+```
+
+### To check formatting without changing files:
+
+#### uv (bash)
+
+```bash
+uv run --locked mdformat --check $(git ls-files '*.md' ':!docs/reference/**')
+```
+
+#### uv (PowerShell)
+
+```powershell
+uv run --locked mdformat --check (git ls-files '*.md' ':!docs/reference/**')
+```
+
+### Nix (in Nix Shell)
+
+```bash
+mdformat --check $(git ls-files '*.md' ':!docs/reference/**')
+```
+
 ## Linting
 
 ### Lint python files with `ruff`:
