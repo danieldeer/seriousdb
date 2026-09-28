@@ -115,6 +115,10 @@ class WriteAheadLog:
     def __init__(self, filename: str):
         self.filename = filename
         self._offset = os.path.getsize(filename) if os.path.isfile(filename) else 0
+        self._file = open(filename, "a+b")
+
+    def close(self) -> None:
+        self._file.close()
 
     def append(self, entry: WalEntry) -> None:
         """Append `entry` to the log and fsync it.
@@ -130,11 +134,13 @@ class WriteAheadLog:
             If the log file cannot be written.
         """
         self._repair_torn_tail()
-        with open(self.filename, "ab") as f:
-            data = (json.dumps(entry.to_dict()) + "\n").encode()
-            f.write(data)
-            f.flush()
-            os.fsync(f.fileno())
+
+        data = (json.dumps(entry.to_dict()) + "\n").encode()
+
+        self._file.write(data)
+        self._file.flush()
+        os.fsync(self._file.fileno())
+
         self._offset += len(data)
 
     def replay(self) -> list[WalEntry]:
@@ -161,9 +167,23 @@ class WriteAheadLog:
         entries: list[WalEntry] = []
         good_offset = 0
         found_bad_entry = False
-        with open(self.filename, "rb") as f:
-            for raw_line in f:
-                if not raw_line.endswith(b"\n"):
+
+        self._file.seek(0)
+
+        for raw_line in self._file:
+            if not raw_line.endswith(b"\n"):
+                found_bad_entry = True
+                break
+            line = raw_line.strip()
+            if line:
+                try:
+                    entries.append(WalEntry.from_dict(json.loads(line.decode())))
+                except (json.JSONDecodeError, UnicodeDecodeError, ValueError) as e:
+                    logger.warning(
+                        "Corrupt entry in write-ahead log %s (%s)",
+                        self.filename,
+                        e,
+                    )
                     found_bad_entry = True
                     break
                 line = raw_line.strip()
@@ -190,8 +210,7 @@ class WriteAheadLog:
                 "Truncating write-ahead log %s to its last known-good entry",
                 self.filename,
             )
-            with open(self.filename, "r+b") as f:
-                f.truncate(good_offset)
+            self._file.truncate(good_offset)
 
         self._offset = good_offset
         return entries
@@ -208,7 +227,9 @@ class WriteAheadLog:
         with tempfile.NamedTemporaryFile("wb", dir=dir_name, delete=False) as tmp_file:
             pass
         try:
+            self._file.close()
             os.replace(tmp_file.name, self.filename)
+            self._file = open(self.filename, "a+b")
         except OSError:
             os.unlink(tmp_file.name)
             raise
