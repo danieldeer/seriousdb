@@ -118,7 +118,13 @@ class WriteAheadLog:
         self._file = open(filename, "a+b")
 
     def close(self) -> None:
-        self._file.close()
+        if self._file is not None:
+            self._file.close()
+            self._file = None
+
+    def _ensure_open(self):
+        if self._file is None:
+            self._file = open(self.filename, "a+b")
 
     def append(self, entry: WalEntry) -> None:
         """Append `entry` to the log and fsync it.
@@ -134,14 +140,24 @@ class WriteAheadLog:
             If the log file cannot be written.
         """
         self._repair_torn_tail()
+        self._ensure_open()
 
         data = (json.dumps(entry.to_dict()) + "\n").encode()
 
-        self._file.write(data)
-        self._file.flush()
-        os.fsync(self._file.fileno())
+        try:
+            self._file.write(data)
+            self._file.flush()
+            os.fsync(self._file.fileno())
 
-        self._offset += len(data)
+            self._offset += len(data)
+        except Exception:
+            try:
+                self._file.close()
+            except OSError:
+                pass
+            finally:
+                self._file = None
+            raise
 
     def replay(self) -> list[WalEntry]:
         """Return every entry durably written to the log, oldest first.
@@ -163,6 +179,8 @@ class WriteAheadLog:
         if not os.path.isfile(self.filename):
             self._offset = 0
             return []
+
+        self._ensure_open()
 
         entries: list[WalEntry] = []
         good_offset = 0
@@ -226,14 +244,20 @@ class WriteAheadLog:
         dir_name = os.path.dirname(self.filename) or "."
         with tempfile.NamedTemporaryFile("wb", dir=dir_name, delete=False) as tmp_file:
             pass
+
+        self.close()
+
         try:
-            self._file.close()
             os.replace(tmp_file.name, self.filename)
-            self._file = open(self.filename, "a+b")
         except OSError:
-            os.unlink(tmp_file.name)
+            try:
+                os.unlink(tmp_file.name)
+            except FileNotFoundError:
+                pass
             raise
+
         self._offset = 0
+        self._file = None
 
     def _repair_torn_tail(self) -> None:
         """Truncate any bytes left by a previous failed write.
