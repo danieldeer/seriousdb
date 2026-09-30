@@ -58,7 +58,7 @@ def test_select_returns_stored_value(cache):
 def test_select_missing_key_raises(cache):
     with pytest.raises(
         ResourceNotFoundError,
-        match="No value set for key missing",
+        match="No value set for key 'missing'",
     ):
         cache.select("missing")
 
@@ -73,7 +73,7 @@ def test_delete_returns_previous_value_and_removes_key(cache):
 
 
 def test_delete_missing_key_raises(cache):
-    with pytest.raises(ResourceNotFoundError, match="No value set for key missing"):
+    with pytest.raises(ResourceNotFoundError, match="No value set for key 'missing'"):
         cache.delete("missing")
 
 
@@ -400,6 +400,43 @@ def test_compact_failure_does_not_corrupt_existing_snapshot(db_path, monkeypatch
         cache._compact()
 
     assert db_path.read_bytes() == original_content
+
+
+def test_none_value_handling(tmp_path: Path, monkeypatch: MonkeyPatch):
+    db_file = tmp_path / "database.sdb"
+    cache = Cache()
+    cache.load(str(db_file))
+
+    # Verify that inserting None raises a ValueError
+    with pytest.raises(ValueError):
+        cache.insert("key_with_none", None)  # ty: ignore[invalid-argument-type]
+
+    # Verify empty string is allowed
+    cache.insert("key_with_empty", "")
+    assert cache.select("key_with_empty") == ""
+
+    db_file2 = tmp_path / "database2.sdb"
+
+    # Test that loading a database with a null value results in a corrupted backup
+    db_file2.write_bytes(b'{"key_with_none": null}')
+
+    fixed_timestamp = 1700000000.0
+    monkeypatch.setattr("seriousdb.cache.time.time", lambda: fixed_timestamp)
+
+    cache2 = Cache()
+    cache2.load(str(db_file2))
+    backup_path = tmp_path / f"database2.sdb.corrupt-{int(fixed_timestamp)}"
+
+    assert backup_path.exists(), f"Expected {backup_path} to exist"
+    assert cache2.db == {}
+    assert json.loads(db_file2.read_bytes()) == {}
+
+    wal_file = tmp_path / "database2.sdb.wal"
+    wal_content = '{"op":"set","key":"k","this_should_not_exist":null}'
+
+    wal_file.write_bytes(wal_content.encode())
+    cache2.load(str(db_file2))
+    assert cache2.exists("this_should_not_exist") is False
 
 
 def test_load_corrupt_backup_collision_preserves_backups(db_path, monkeypatch):

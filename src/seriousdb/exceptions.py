@@ -35,3 +35,9 @@ class ServiceUnavailableError(ApplicationError):
     """A dependency the application needs is currently not usable."""
 
     default_detail = "The service is temporarily unavailable"
+
+
+class CorruptDatabaseError(ApplicationError):
+    """A corrupt database was encountered."""
+
+    default_detail = "The database is corrupt"

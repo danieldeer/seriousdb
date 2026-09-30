@@ -16,6 +16,12 @@ Base class for expected application errors.
   * **default_detail** (*str*) – Detail used when none is given.
   * **detail** (*str*) – Human readable description of this error.
 
+### *exception* CorruptDatabaseError(detail=None)
+
+Bases: [`ApplicationError`](#seriousdb.exceptions.ApplicationError)
+
+A corrupt database was encountered.
+
 ### *exception* ResourceNotFoundError(detail=None)
 
 Bases: [`ApplicationError`](#seriousdb.exceptions.ApplicationError)

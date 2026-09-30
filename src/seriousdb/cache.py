@@ -12,10 +12,14 @@ import logging
 import os
 import tempfile
 import time
-from collections.abc import Iterable
+from collections.abc import Callable, Iterable
 from threading import Lock
 
-from .exceptions import ResourceNotFoundError, ServiceUnavailableError
+from .exceptions import (
+    CorruptDatabaseError,
+    ResourceNotFoundError,
+    ServiceUnavailableError,
+)
 from .wal import DeleteEntry, SetEntry, WalEntry, WriteAheadLog
 
 logger = logging.getLogger(__name__)
@@ -81,7 +85,11 @@ class Cache:
             If no database has been loaded.
         OSError
             If the write-ahead log cannot be written. `self.db` is left unchanged in this case.
+        ValueError
+            If `value` is ``None``.
         """
+        if value is None:
+            raise ValueError("Cannot store None as a value")
         with self.lock:
             db = require_db(self)
             is_new_key = key not in db
@@ -111,10 +119,8 @@ class Cache:
             If no database has been loaded.
         """
         with self.lock:
-            val = require_db(self).get(key, None)
-        if val is None:
-            logger.debug("Key not found: %s", key)
-            raise ResourceNotFoundError(f"No value set for key {key}")
+            db = require_db(self)
+            val = _safe_key_error_handler(lambda: db[key])
         return val
 
     def delete(self, key: str) -> str:
@@ -146,14 +152,12 @@ class Cache:
         """
         with self.lock:
             db = require_db(self)
-            val = db.get(key, None)
-            if val is not None:
-                self._record_write(DeleteEntry(key=key))
-                db.pop(key, None)
-                self._safe_maybe_compact()
-        if val is None:
-            logger.debug("Key not found: %s", key)
-            raise ResourceNotFoundError(f"No value set for key {key}")
+            val = _safe_key_error_handler(
+                lambda: db[key]
+            )  # Raises Error if key does not exist
+            self._record_write(DeleteEntry(key=key))
+            db.pop(key, None)
+            self._safe_maybe_compact()
         return val
 
     def exists(self, key: str) -> bool:
@@ -308,9 +312,16 @@ class Cache:
                             raise TypeError(
                                 f"expected dict, got {type(self.db).__name__}"
                             )
+                        if _check_db_for_corruption(self.db):
+                            raise CorruptDatabaseError()
                         logger.info("Loaded database from %s", filename)
 
-                except (json.JSONDecodeError, UnicodeDecodeError, TypeError) as e:
+                except (
+                    json.JSONDecodeError,
+                    UnicodeDecodeError,
+                    TypeError,
+                    CorruptDatabaseError,
+                ) as e:
                     backup = _generate_corrupt_backup_path(filename)
                     os.replace(filename, backup)
                     logger.warning(
@@ -325,6 +336,12 @@ class Cache:
             replayed = self.wal.replay()
             self._writes_since_compact = len(replayed)
             for entry in replayed:
+                if isinstance(entry, SetEntry) and entry.value is None:
+                    logger.warning(
+                        "Ignoring WAL Entry with None value for key %s during WAL replay",
+                        entry.key,
+                    )
+                    continue
                 entry.apply(require_db(self))
 
     def flush(self) -> None:
@@ -432,6 +449,29 @@ def _write_default(filename: str) -> dict[str, str]:
     return dict(DEFAULT_DB)
 
 
+def _check_db_for_corruption(db: dict[str, str]) -> bool:
+    """Check if the database is corrupt.
+
+    A database is considered corrupt if any of its values are ``None``.
+
+    Parameters
+    ----------
+    db : dict of str to str
+        The database to check.
+
+    Returns
+    -------
+    bool
+        ``True`` if the database is corrupt, ``False`` otherwise.
+    """
+    if db is None:
+        return False
+    for value in db.values():
+        if value is None:
+            return True
+    return False
+
+
 def _generate_corrupt_backup_path(filename: str) -> str:
     """Generate an unused backup path for a corrupt database file.
 
@@ -456,6 +496,31 @@ def _generate_corrupt_backup_path(filename: str) -> str:
     while os.path.lexists(f"{base}-{counter}"):
         counter += 1
     return f"{base}-{counter}"
+
+
+def _safe_key_error_handler(callback: Callable[[], str]) -> str:
+    """Safely handle a key error by raising a ResourceNotFoundError and logging the event.
+
+    Parameters
+    ----------
+    callback : Callable[[], str]
+        A callable that attempts to retrieve a value from a dictionary.
+
+    Returns
+    -------
+    str
+        The value retrieved by the callback.
+
+    Raises
+    ------
+    ResourceNotFoundError
+        If the callback raises a KeyError, indicating that the key was not found in the dictionary.
+    """
+    try:
+        return callback()
+    except KeyError as e:
+        logger.debug("Key not found: %s", e)
+        raise ResourceNotFoundError(f"No value set for key {e}") from e
 
 
 def require_db(cache: Cache) -> dict[str, str]:
