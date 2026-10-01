@@ -21,6 +21,8 @@ PRs that skip this process may be closed without review.
 - If you add or change a public function, add or adjust tests to
   cover the new behavior, and [regenerate the generated reference](development.md#documentation) —
   CI checks it's not stale.
+- If your change affects users (new feature, changed behavior, fix, removal), add an entry
+  under `[Unreleased]` in [`CHANGELOG.md`](../CHANGELOG.md).
 
 Commits are always run pre-commit to enforce `uv lock`, `type check` ,`pytest` , `linting`,
 `formatting` and `conventional commit`

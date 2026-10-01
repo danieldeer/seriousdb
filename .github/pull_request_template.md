@@ -26,3 +26,5 @@
 - [ ] Changed behavior is covered by appropriate tests, including a regression test for bug fixes; any limitations are explained under Validation.
 - [ ] Validation lists the checks or manual flows I ran and their results.
 - [ ] Relevant documentation is updated, or no documentation change is needed.
+- [ ] User-facing changes are listed under `[Unreleased]` in `CHANGELOG.md`, or this PR has no user-facing changes.
+
