@@ -141,25 +141,25 @@ A docstring starts with a one-line summary, followed by the sections that apply,
 
 ```python
 def select(self, key: str) -> str:
-    """Return the value stored under `key`.
+	"""Return the value stored under `key`.
 
-    Parameters
-    ----------
-    key : str
-        Key to look up.
+	Parameters
+	----------
+	key : str
+	    Key to look up.
 
-    Returns
-    -------
-    str
-        The value stored under `key`.
+	Returns
+	-------
+	str
+	    The value stored under `key`.
 
-    Raises
-    ------
-    ResourceNotFoundError
-        If `key` does not exist.
-    ServiceUnavailableError
-        If no database has been loaded.
-    """
+	Raises
+	------
+	ResourceNotFoundError
+	    If `key` does not exist.
+	ServiceUnavailableError
+	    If no database has been loaded.
+	"""
 ```
 
 See [`cache.py`](../src/seriousdb/cache.py) and [`api.py`](../src/seriousdb/api.py) for more

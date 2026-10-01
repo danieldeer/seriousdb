@@ -9,21 +9,21 @@ seriousdb can be used as a storage layer from other Python projects.
 """
 
 from seriousdb.api import (
-    count,
-    delete,
-    exists,
-    get,
-    get_all,
-    get_bulk,
-    set,
+	count,
+	delete,
+	exists,
+	get,
+	get_all,
+	get_bulk,
+	set,
 )
 
 __all__ = [
-    "count",
-    "delete",
-    "exists",
-    "get",
-    "get_all",
-    "get_bulk",
-    "set",
+	"count",
+	"delete",
+	"exists",
+	"get",
+	"get_all",
+	"get_bulk",
+	"set",
 ]

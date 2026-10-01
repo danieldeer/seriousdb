@@ -26,10 +26,10 @@ copyright = "Daniel Hirsch"
 author = "Daniel Hirsch"
 
 extensions = [
-    "sphinx.ext.autodoc",
-    "sphinx.ext.autosummary",
-    "sphinx.ext.napoleon",
-    "sphinx_markdown_builder",
+	"sphinx.ext.autodoc",
+	"sphinx.ext.autosummary",
+	"sphinx.ext.napoleon",
+	"sphinx_markdown_builder",
 ]
 
 # -- autodoc / autosummary -------------------------------------------------
@@ -46,9 +46,9 @@ add_module_names = False
 # own ``autofunction``/``autoclass``/``autoexception`` directive. Adding
 # "members" here would make ``automodule`` document them a second time.
 autodoc_default_options = {
-    "undoc-members": False,
-    "show-inheritance": True,
-    "member-order": "bysource",
+	"undoc-members": False,
+	"show-inheritance": True,
+	"member-order": "bysource",
 }
 autodoc_typehints = "description"
 autodoc_typehints_description_target = "documented"

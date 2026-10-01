@@ -43,6 +43,12 @@ docs = [
     "sphinx-markdown-builder==0.6.11",
 ]
 
+[tool.ruff]
+# style/formatting
+# comes from https://docs.kernel.org/process/coding-style.html
+line-length = 80
+indent-width = 8
+
 [build-system]
 requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
@@ -57,6 +63,7 @@ markers = ["benchmark: engine performance scenarios configured by pytest-benchma
 
 [tool.ruff.lint]
 extend-select = ["D"]
+ignore = ["D206"]
 
 [tool.ruff.lint.pydocstyle]
 convention = "numpy"
@@ -67,6 +74,8 @@ convention = "numpy"
 
 [tool.ruff.format]
 docstring-code-format = true
+quote-style = "double"
+indent-style = "tab"
 
 [tool.ty.environment]
 root = ["."]
