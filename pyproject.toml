@@ -76,6 +76,7 @@ convention = "numpy"
 docstring-code-format = true
 quote-style = "double"
 indent-style = "tab"
+line-ending = "lf"
 
 [tool.ty.environment]
 root = ["."]
