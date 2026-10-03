@@ -5,6 +5,7 @@ import logging
 import os
 import tempfile
 from dataclasses import dataclass
+from .utils import get_duplicate_detector, ErrorForTypeFile
 
 logger = logging.getLogger(__name__)
 
@@ -156,13 +157,15 @@ class WriteAheadLog:
                 line = raw_line.strip()
                 if line:
                     try:
-                        entries.append(WalEntry.from_dict(json.loads(line.decode())))
+                        entries.append(WalEntry.from_dict(json.loads(line.decode(),object_pairs_hook=get_duplicate_detector(ErrorForTypeFile.SDBWF))))
                     except (
                         json.JSONDecodeError,
                         UnicodeDecodeError,
                         TypeError,
                         ValueError,
                     ) as e:
+                        if "Duplicate occurred in" in str(e):
+                            raise e
                         logger.warning(
                             "Corrupt entry in write-ahead log %s (%s)",
                             self.filename,
