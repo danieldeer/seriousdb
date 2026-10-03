@@ -17,6 +17,7 @@ from threading import Lock
 
 from .exceptions import ResourceNotFoundError, ServiceUnavailableError
 from .wal import DeleteEntry, SetEntry, WalEntry, WriteAheadLog
+from .utils import get_duplicate_detector, ErrorForTypeFile
 
 logger = logging.getLogger(__name__)
 
@@ -43,6 +44,8 @@ class Cache:
         Lock that must be held while reading or changing `db`.
     _writes_since_compact : int
         Counter for number of writes since last compaction.
+    cache_size: int
+        Make user to set cache size limit. If the cache size exceeds some tuples From cache will be evicted .
     """
 
     def __init__(self):
@@ -51,6 +54,7 @@ class Cache:
         self.db: dict[str, str] | None = None
         self.lock = Lock()
         self._writes_since_compact: int = 0
+        self.cache_size: int = 0 
 
     def insert(self, key: str, value: str) -> tuple[str, bool]:
         """Store `value` under `key`, replacing any existing value.
@@ -303,7 +307,7 @@ class Cache:
             else:
                 try:
                     with open(filename, "rb") as f:
-                        self.db = json.loads(f.read().decode())
+                        self.db = json.loads(f.read().decode(), object_pairs_hook=get_duplicate_detector(ErrorForTypeFile.SDBF))
                         if not isinstance(self.db, dict):
                             raise TypeError(
                                 f"expected dict, got {type(self.db).__name__}"

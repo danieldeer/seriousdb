@@ -143,3 +143,11 @@ def test_append_repairs_leftover_bytes_from_a_previous_failed_write(wal, wal_pat
         SetEntry(key="a", value="1"),
         SetEntry(key="c", value="3"),
     ]
+def test_loading_wal_with_duplicate_keys_raises_error(wal, wal_path):
+    wal.append(SetEntry(key="a", value="1"))
+
+    with open(wal_path, "a", encoding="utf-8") as f:
+        f.write('{"op": "set", "key": "a", "key": "b", "value": "2"}\n')
+
+    with pytest.raises(ValueError, match="Duplicate occurred in sdbwf: 'key'"):
+        wal.replay()
