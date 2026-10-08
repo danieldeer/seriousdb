@@ -117,7 +117,7 @@ class WriteAheadLog:
         self._offset = os.path.getsize(filename) if os.path.isfile(filename) else 0
         self._file = open(filename, "a+b")
 
-    def close(self) -> None:
+    def _close(self) -> None:
         if self._file is not None:
             self._file.close()
             self._file = None
@@ -196,7 +196,7 @@ class WriteAheadLog:
             if line:
                 try:
                     entries.append(WalEntry.from_dict(json.loads(line.decode())))
-                except (json.JSONDecodeError, UnicodeDecodeError, ValueError) as e:
+                except (json.JSONDecodeError, UnicodeDecodeError, TypeError, ValueError) as e:
                     logger.warning(
                         "Corrupt entry in write-ahead log %s (%s)",
                         self.filename,
@@ -204,24 +204,7 @@ class WriteAheadLog:
                     )
                     found_bad_entry = True
                     break
-                line = raw_line.strip()
-                if line:
-                    try:
-                        entries.append(WalEntry.from_dict(json.loads(line.decode())))
-                    except (
-                        json.JSONDecodeError,
-                        UnicodeDecodeError,
-                        TypeError,
-                        ValueError,
-                    ) as e:
-                        logger.warning(
-                            "Corrupt entry in write-ahead log %s (%s)",
-                            self.filename,
-                            e,
-                        )
-                        found_bad_entry = True
-                        break
-                good_offset += len(raw_line)
+            good_offset += len(raw_line)
 
         if found_bad_entry:
             logger.warning(
@@ -245,7 +228,7 @@ class WriteAheadLog:
         with tempfile.NamedTemporaryFile("wb", dir=dir_name, delete=False) as tmp_file:
             pass
 
-        self.close()
+        self._close()
 
         try:
             os.replace(tmp_file.name, self.filename)
