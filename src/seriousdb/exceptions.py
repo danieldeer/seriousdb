@@ -41,3 +41,9 @@ class ServiceUnavailableError(ApplicationError):
     """A dependency the application needs is currently not usable."""
 
     default_detail = "The service is temporarily unavailable"
+
+
+class DiskManagerError(ApplicationError):
+    """A raw page read, write or allocation on the database file failed."""
+
+    default_detail = "The database file could not be accessed as fixed-size pages"

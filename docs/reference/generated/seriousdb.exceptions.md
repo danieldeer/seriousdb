@@ -16,6 +16,12 @@ Base class for expected application errors.
   * **default_detail** (*str*) – Detail used when none is given.
   * **detail** (*str*) – Human readable description of this error.
 
+### *exception* DiskManagerError(detail=None)
+
+Bases: [`ApplicationError`](#seriousdb.exceptions.ApplicationError)
+
+A raw page read, write or allocation on the database file failed.
+
 ### *exception* ResourceNotFoundError(detail=None)
 
 Bases: [`ApplicationError`](#seriousdb.exceptions.ApplicationError)
