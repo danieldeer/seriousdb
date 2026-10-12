@@ -321,19 +321,16 @@ class Cache:
                         e,
                         backup,
                     )
-                    self.db = _write_default(filename)
-            self.filename = filename
+                    db = _write_default(filename)
             if self.wal is not None:
                 self.wal.close()
             self.wal = WriteAheadLog(f"{filename}.wal")
             replayed = self.wal.replay()
-            self._writes_since_compact = len(replayed)
             for entry in replayed:
                 entry.apply(db)
 
             self.db = db
             self.filename = filename
-            self.wal = wal
             self._writes_since_compact = len(replayed)
 
     def flush(self) -> None:
