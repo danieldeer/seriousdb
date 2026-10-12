@@ -117,12 +117,14 @@ class WriteAheadLog:
         self._offset = os.path.getsize(filename) if os.path.isfile(filename) else 0
         self._file = open(filename, "a+b")
 
-    def _close(self) -> None:
-        if self._file is not None:
-            self._file.close()
-            self._file = None
+    def close(self) -> None:
+         """Close the WAL file if it is open."""
+         f, self._file = self._file, None
+         if f is not None:
+            f.close()
 
     def _ensure_open(self):
+        """Return the open WAL file, reopening it if necessary."""
         if self._file is None:
             self._file = open(self.filename, "a+b")
 
