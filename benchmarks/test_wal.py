@@ -44,3 +44,41 @@ def test_wal_append(
         rounds=50,
         warmup_rounds=WARMUP_ROUNDS,
     )
+
+
+@pytest.mark.benchmark(group="wal")
+def test_wal_append_many(
+    benchmark,
+    database_file: Path,
+) -> None:
+    """Measure repeated appends using one open WAL."""
+
+    entry = SetEntry(key="key", value="value")
+
+    def prepare_wal():
+        database_file.unlink(missing_ok=True)
+        wal = WriteAheadLog(str(database_file))
+        return (wal,), {}
+
+    def append_many(wal: WriteAheadLog) -> None:
+        for _ in range(1000):
+            wal.append(entry)
+
+    def close_wal(wal: WriteAheadLog) -> None:
+        wal.close()
+
+    benchmark.extra_info.update(
+        operation="1000 WAL appends",
+        persistence="write + flush + fsync",
+        entries=1000,
+        key_bytes=len(entry.key.encode()),
+        value_bytes=len(entry.value.encode()),
+    )
+
+    benchmark.pedantic(
+        append_many,
+        setup=prepare_wal,
+        teardown=close_wal,
+        rounds=10,
+        warmup_rounds=WARMUP_ROUNDS,
+    )

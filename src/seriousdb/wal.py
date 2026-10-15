@@ -115,18 +115,19 @@ class WriteAheadLog:
     def __init__(self, filename: str):
         self.filename = filename
         self._offset = os.path.getsize(filename) if os.path.isfile(filename) else 0
-        self._file = open(filename, "a+b")
+        self._file = open(filename, "a+b")  # noqa: SIM115 - kept open, closed in close()
 
     def close(self) -> None:
-         """Close the WAL file if it is open."""
-         f, self._file = self._file, None
-         if f is not None:
+        """Close the WAL file if it is open."""
+        f, self._file = self._file, None
+        if f is not None:
             f.close()
 
     def _ensure_open(self):
         """Return the open WAL file, reopening it if necessary."""
         if self._file is None:
-            self._file = open(self.filename, "a+b")
+            self._file = open(self.filename, "a+b")  # noqa: SIM115 - reopened lazily, closed in close()
+        return self._file
 
     def append(self, entry: WalEntry) -> None:
         """Append `entry` to the log and fsync it.
@@ -198,7 +199,12 @@ class WriteAheadLog:
             if line:
                 try:
                     entries.append(WalEntry.from_dict(json.loads(line.decode())))
-                except (json.JSONDecodeError, UnicodeDecodeError, TypeError, ValueError) as e:
+                except (
+                    json.JSONDecodeError,
+                    UnicodeDecodeError,
+                    TypeError,
+                    ValueError,
+                ) as e:
                     logger.warning(
                         "Corrupt entry in write-ahead log %s (%s)",
                         self.filename,
@@ -230,9 +236,13 @@ class WriteAheadLog:
         with tempfile.NamedTemporaryFile("wb", dir=dir_name, delete=False) as tmp_file:
             pass
 
+<<<<<<< HEAD
         self._close()
 
+=======
+>>>>>>> e583d10 (fix the format checks and benchmark test)
         try:
+            self.close()
             os.replace(tmp_file.name, self.filename)
         except OSError:
             try:
