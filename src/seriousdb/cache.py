@@ -320,15 +320,23 @@ class Cache:
                     db = _write_default(filename)
 
             wal = WriteAheadLog(f"{filename}.wal")
-            replayed = wal.replay()
-
-            for entry in replayed:
-                entry.apply(db)
-
+            try:
+                replayed = wal.replay()
+                for entry in replayed:
+                    entry.apply(db)
+            except Exception:
+                try:
+                    wal.close()
+                except OSError:
+                    pass
+                raise
+            old_wal = self.wal
             self.db = db
             self.filename = filename
             self.wal = wal
             self._writes_since_compact = len(replayed)
+            if old_wal is not None:
+                old_wal.close()
 
     def flush(self) -> None:
         """No-op, kept for backward compatibility.

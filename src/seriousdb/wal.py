@@ -116,6 +116,19 @@ class WriteAheadLog:
     def __init__(self, filename: str):
         self.filename = filename
         self._offset = os.path.getsize(filename) if os.path.isfile(filename) else 0
+        self._file = open(filename, "a+b")  # noqa: SIM115 - kept open, closed in close()
+
+    def close(self) -> None:
+        """Close the WAL file if it is open."""
+        f, self._file = self._file, None
+        if f is not None:
+            f.close()
+
+    def _ensure_open(self):
+        """Return the open WAL file, reopening it if necessary."""
+        if self._file is None:
+            self._file = open(self.filename, "a+b")  # noqa: SIM115 - reopened lazily, closed in close()
+        return self._file
 
     def append(self, entry: WalEntry) -> None:
         """Append `entry` to the log and fsync it.
@@ -131,12 +144,24 @@ class WriteAheadLog:
             If the log file cannot be written.
         """
         self._repair_torn_tail()
-        with open(self.filename, "ab") as f:
-            data = (json.dumps(entry.to_dict()) + "\n").encode()
+        f = self._ensure_open()
+
+        data = (json.dumps(entry.to_dict()) + "\n").encode()
+
+        try:
             f.write(data)
             f.flush()
             os.fsync(f.fileno())
-        self._offset += len(data)
+
+            self._offset += len(data)
+        except Exception:
+            try:
+                f.close()
+            except OSError:
+                pass
+            finally:
+                self._file = None
+            raise
 
     def replay(self) -> list[WalEntry]:
         """Return every entry durably written to the log, oldest first.
@@ -159,40 +184,43 @@ class WriteAheadLog:
             self._offset = 0
             return []
 
+        f = self._ensure_open()
+
         entries: list[WalEntry] = []
         good_offset = 0
         found_bad_entry = False
-        with open(self.filename, "rb") as f:
-            for raw_line in f:
-                if not raw_line.endswith(b"\n"):
+
+        f.seek(0)
+
+        for raw_line in f:
+            if not raw_line.endswith(b"\n"):
+                found_bad_entry = True
+                break
+            line = raw_line.strip()
+            if line:
+                try:
+                    entries.append(WalEntry.from_dict(json.loads(line.decode())))
+                except (
+                    json.JSONDecodeError,
+                    UnicodeDecodeError,
+                    TypeError,
+                    ValueError,
+                ) as e:
+                    logger.warning(
+                        "Corrupt entry in write-ahead log %s (%s)",
+                        self.filename,
+                        e,
+                    )
                     found_bad_entry = True
                     break
-                line = raw_line.strip()
-                if line:
-                    try:
-                        entries.append(WalEntry.from_dict(json.loads(line.decode())))
-                    except (
-                        json.JSONDecodeError,
-                        UnicodeDecodeError,
-                        TypeError,
-                        ValueError,
-                    ) as e:
-                        logger.warning(
-                            "Corrupt entry in write-ahead log %s (%s)",
-                            self.filename,
-                            e,
-                        )
-                        found_bad_entry = True
-                        break
-                good_offset += len(raw_line)
+            good_offset += len(raw_line)
 
         if found_bad_entry:
             logger.warning(
                 "Truncating write-ahead log %s to its last known-good entry",
                 self.filename,
             )
-            with open(self.filename, "r+b") as f:
-                f.truncate(good_offset)
+            f.truncate(good_offset)
 
         self._offset = good_offset
         return entries
@@ -208,12 +236,19 @@ class WriteAheadLog:
         dir_name = os.path.dirname(self.filename) or "."
         with tempfile.NamedTemporaryFile("wb", dir=dir_name, delete=False) as tmp_file:
             pass
+
         try:
+            self.close()
             os.replace(tmp_file.name, self.filename)
         except OSError:
-            os.unlink(tmp_file.name)
+            try:
+                os.unlink(tmp_file.name)
+            except FileNotFoundError:
+                pass
             raise
+
         self._offset = 0
+        self._file = None
 
     def _repair_torn_tail(self) -> None:
         """Truncate any bytes left by a previous failed write.
