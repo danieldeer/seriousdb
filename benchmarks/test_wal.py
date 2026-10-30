@@ -21,7 +21,7 @@ def test_wal_append(
 
     def prepare_wal():
         database_file.unlink(missing_ok=True)
-        wal = WriteAheadLog(str(database_file))
+        wal = WriteAheadLog(str(database_file), sync_every=1)
         return (wal,), {}
 
     def append_entry(wal: WriteAheadLog) -> None:
@@ -33,6 +33,7 @@ def test_wal_append(
     benchmark.extra_info.update(
         operation="WAL append",
         persistence="write + flush + fsync",
+        sync_every=1,
         key_bytes=len(entry.key.encode()),
         value_bytes=len(entry.value.encode()),
     )
@@ -46,31 +47,35 @@ def test_wal_append(
     )
 
 
-@pytest.mark.benchmark(group="wal")
+@pytest.mark.benchmark(group="wal-append-many")
+@pytest.mark.parametrize("sync_every", [1, 10, 50, 100, 500, 1000])
 def test_wal_append_many(
     benchmark,
     database_file: Path,
+    sync_every: int,
 ) -> None:
-    """Measure repeated appends using one open WAL."""
+    """Measure repeated appends using one open WAL across different sync_every intervals."""
 
     entry = SetEntry(key="key", value="value")
+    entries_count = 1000
 
     def prepare_wal():
         database_file.unlink(missing_ok=True)
-        wal = WriteAheadLog(str(database_file))
+        wal = WriteAheadLog(str(database_file), sync_every=sync_every)
         return (wal,), {}
 
     def append_many(wal: WriteAheadLog) -> None:
-        for _ in range(1000):
+        for _ in range(entries_count):
             wal.append(entry)
 
     def close_wal(wal: WriteAheadLog) -> None:
         wal.close()
 
     benchmark.extra_info.update(
-        operation="1000 WAL appends",
-        persistence="write + flush + fsync",
-        entries=1000,
+        operation=f"{entries_count} WAL appends (sync_every={sync_every})",
+        persistence=f"write + flush + fsync every {sync_every}",
+        sync_every=sync_every,
+        entries=entries_count,
         key_bytes=len(entry.key.encode()),
         value_bytes=len(entry.value.encode()),
     )

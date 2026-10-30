@@ -112,8 +112,10 @@ class WriteAheadLog:
         Path of the log file.
     """
 
-    def __init__(self, filename: str):
+    def __init__(self, filename: str, sync_every: int = 1):
         self.filename = filename
+        self.sync_every = sync_every
+        self._unsynced_count = 0
         self._offset = os.path.getsize(filename) if os.path.isfile(filename) else 0
         self._file = open(filename, "a+b")  # noqa: SIM115 - kept open, closed in close()
 
@@ -149,10 +151,13 @@ class WriteAheadLog:
 
         try:
             self._file.write(data)
-            self._file.flush()
-            os.fsync(self._file.fileno())
-
             self._offset += len(data)
+            self._unsynced_count += 1
+
+            if self._unsynced_count >= self.sync_every:
+                self._file.flush()
+                os.fsync(self._file.fileno())
+                self._unsynced_count = 0
         except Exception:
             try:
                 self._file.close()
