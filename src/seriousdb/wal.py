@@ -236,11 +236,6 @@ class WriteAheadLog:
         with tempfile.NamedTemporaryFile("wb", dir=dir_name, delete=False) as tmp_file:
             pass
 
-<<<<<<< HEAD
-        self._close()
-
-=======
->>>>>>> e583d10 (fix the format checks and benchmark test)
         try:
             self.close()
             os.replace(tmp_file.name, self.filename)
