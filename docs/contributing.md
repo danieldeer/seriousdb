@@ -16,10 +16,10 @@ PRs that skip this process may be closed without review.
 
 ## Before opening a PR
 
-- Format the Python code — see [Formatting](development.md#formatting).
-- Follow the [docstring conventions](development.md#docstrings).
+- Format the Python code — see [Formatting](/docs/development.md#formatting).
+- Follow the [docstring conventions](/docs/development.md#docstrings).
 - If you add or change a public function, add or adjust tests to
-  cover the new behavior, and [regenerate the generated reference](development.md#documentation) —
+  cover the new behavior, and [regenerate the generated reference](/docs/development.md#documentation) —
   CI checks it's not stale.
 
 Commits are always run pre-commit to enforce `uv lock`, `type check` ,`pytest` , `linting`,
