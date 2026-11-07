@@ -144,6 +144,23 @@ def test_load_rejects_non_object_json(db_path):
     assert list(db_path.parent.glob(".sdb.corrupt-*"))
 
 
+@pytest.mark.parametrize(
+    "bad_value",
+    [None, 123, True, [1, 2], {"nested": "dict"}],
+    ids=["null", "int", "bool", "list", "object"],
+)
+def test_load_rejects_non_string_values(db_path, bad_value):
+    """Treat a snapshot whose values are not all strings as corrupt."""
+    db_path.write_text(json.dumps({"a": "ok", "b": bad_value}))
+
+    cache = Cache()
+    cache.load(str(db_path))
+
+    assert cache.db == {}
+    assert db_path.exists()
+    assert list(db_path.parent.glob(".sdb.corrupt-*"))
+
+
 def test_load_failure_does_not_leave_cache_partially_initialized(db_path, monkeypatch):
     """A transient WAL replay failure must leave load retryable without data loss."""
     original = Cache()
