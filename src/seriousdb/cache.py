@@ -113,11 +113,11 @@ class Cache:
             If no database has been loaded.
         """
         with self.lock:
-            val = self._require_db().get(key, None)
-        if val is None:
-            logger.debug("Key not found: %s", key)
-            raise ResourceNotFoundError(f"No value set for key {key}")
-        return val
+            db = self._require_db()
+            if key not in db:
+                logger.debug("Key not found: %s", key)
+                raise ResourceNotFoundError(f"No value set for key {key}")
+            return db[key]
 
     def delete(self, key: str) -> str:
         """Remove `key` and return the value it had.
@@ -150,15 +150,14 @@ class Cache:
         """
         with self.lock:
             db = self._require_db()
-            val = db.get(key, None)
-            if val is not None:
+            if key in db:
+                val = db[key]
                 self._record_write(DeleteEntry(key=key))
                 db.pop(key, None)
                 self._safe_maybe_compact()
-        if val is None:
-            logger.debug("Key not found: %s", key)
-            raise ResourceNotFoundError(f"No value set for key {key}")
-        return val
+                return val
+        logger.debug("Key not found: %s", key)
+        raise ResourceNotFoundError(f"No value set for key {key}")
 
     def exists(self, key: str) -> bool:
         """Return whether `key` exists in the database.
@@ -310,6 +309,8 @@ class Cache:
                         db = json.loads(f.read().decode())
                         if not isinstance(db, dict):
                             raise TypeError(f"expected dict, got {type(db).__name__}")
+                        if not all(isinstance(value, str) for value in db.values()):
+                            raise TypeError("expected all values to be strings")
                         logger.info("Loaded database from %s", filename)
 
                 except (json.JSONDecodeError, UnicodeDecodeError, TypeError) as e:
