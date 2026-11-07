@@ -278,10 +278,11 @@ class Cache:
 
         If the file does not exist, it is created with an empty database.
         If it is not valid UTF-8 JSON or does not contain a JSON object, it is
-        renamed to ``<filename>.corrupt-<unix timestamp>``. If that backup already
-        exists, a numeric suffix is appended (such as ``-1``, ``-2``, etc) to avoid overwriting it.
-        A warning is logged, and a new file with an empty database is created in its
-        place.
+        renamed to ``<filename>.corrupt-<unix timestamp>``, along with any
+        write-ahead log at ``<filename>.wal``. If a backup path already exists,
+        a numeric suffix is appended (such as ``-1``, ``-2``, etc) to avoid
+        overwriting it. A warning is logged, and a new file with an empty
+        database is created in its place.
 
         After the snapshot is loaded, any entries in the write-ahead log
         (``<filename>.wal``) are replayed on top of it, recovering writes
@@ -315,6 +316,7 @@ class Cache:
                 except (json.JSONDecodeError, UnicodeDecodeError, TypeError) as e:
                     backup = _generate_corrupt_backup_path(filename)
                     os.replace(filename, backup)
+                    _move_corrupt_wal(filename)
                     logger.warning(
                         "Corrupt database file %s (%s); moved to %s and starting fresh",
                         filename,
@@ -510,3 +512,29 @@ def _generate_corrupt_backup_path(filename: str) -> str:
     while os.path.lexists(f"{base}-{counter}"):
         counter += 1
     return f"{base}-{counter}"
+
+
+def _move_corrupt_wal(filename: str) -> None:
+    """Move the write-ahead log of a corrupt database out of the way.
+
+    A write-ahead log records writes applied on top of a specific snapshot.
+    When that snapshot is corrupt and replaced with a fresh, empty database,
+    replaying the old log would resurrect writes that no longer correspond to
+    the data on disk, so the log is preserved as a backup instead of replayed.
+
+    Parameters
+    ----------
+    filename : str
+        Path of the database file. Its write-ahead log is expected at
+        ``<filename>.wal``.
+    """
+    wal_filename = f"{filename}.wal"
+    if not os.path.isfile(wal_filename):
+        return
+    wal_backup = _generate_corrupt_backup_path(wal_filename)
+    os.replace(wal_filename, wal_backup)
+    logger.warning(
+        "Moved write-ahead log %s to %s after database corruption",
+        wal_filename,
+        wal_backup,
+    )

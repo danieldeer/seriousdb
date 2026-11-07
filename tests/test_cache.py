@@ -133,6 +133,25 @@ def test_load_corrupt_database_starts_fresh(db_path):
     assert list(db_path.parent.glob(".sdb.corrupt-*"))
 
 
+def test_load_corrupt_database_moves_wal_alongside(db_path):
+    """Move a WAL tied to a corrupt snapshot instead of replaying it onto fresh data."""
+    db_path.write_bytes(b"not valid json")
+
+    wal_path = Path(str(db_path) + ".wal")
+    wal = WriteAheadLog(str(wal_path))
+    wal.append(SetEntry(key="stale", value="entry"))
+
+    cache = Cache()
+    cache.load(str(db_path))
+
+    # The stale WAL entry must not be resurrected onto the fresh database.
+    assert cache.db == {}
+
+    # Both the corrupt snapshot and its WAL are preserved as backups.
+    assert list(db_path.parent.glob(f"{db_path.name}.corrupt-*"))
+    assert list(db_path.parent.glob(f"{db_path.name}.wal.corrupt-*"))
+
+
 def test_load_rejects_non_object_json(db_path):
     db_path.write_text(json.dumps(["not", "a", "database"]))
 
