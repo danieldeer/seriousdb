@@ -157,3 +157,22 @@ def test_append_repairs_leftover_bytes_from_a_previous_failed_write(wal, wal_pat
         SetEntry(key="a", value="1"),
         SetEntry(key="c", value="3"),
     ]
+
+
+def test_append_refuses_a_symlinked_log(tmp_path):
+    victim = tmp_path / "victim"
+    victim.write_bytes(b"do not touch")
+    wal_path = tmp_path / "test.wal"
+    wal_path.symlink_to(victim)
+    wal = WriteAheadLog(str(wal_path))
+
+    with pytest.raises(OSError):
+        wal.append(SetEntry(key="a", value="1"))
+
+    assert victim.read_bytes() == b"do not touch"
+
+
+def test_append_creates_log_with_0600_permissions(wal, wal_path):
+    wal.append(SetEntry(key="a", value="1"))
+
+    assert wal_path.stat().st_mode & 0o777 == 0o600

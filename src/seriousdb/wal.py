@@ -116,6 +116,18 @@ class WriteAheadLog:
         self.filename = filename
         self._offset = os.path.getsize(filename) if os.path.isfile(filename) else 0
 
+    def _open_log(self, mode: str):
+        """Open the log without following symlinks; create with 0600."""
+        flags = {
+            "rb": os.O_RDONLY,
+            "r+b": os.O_RDWR,
+            "ab": os.O_WRONLY | os.O_APPEND | os.O_CREAT,
+        }[mode]
+        if mode != "rb":
+            flags |= os.O_NOFOLLOW
+        fd = os.open(self.filename, flags, 0o600)
+        return os.fdopen(fd, mode)
+
     def append(self, entry: WalEntry) -> None:
         """Append `entry` to the log and fsync it.
 
@@ -130,7 +142,7 @@ class WriteAheadLog:
             If the log file cannot be written.
         """
         self._repair_torn_tail()
-        with open(self.filename, "ab") as f:
+        with self._open_log("ab") as f:
             data = (json.dumps(entry.to_dict()) + "\n").encode()
             f.write(data)
             f.flush()
@@ -161,7 +173,7 @@ class WriteAheadLog:
         entries: list[WalEntry] = []
         good_offset = 0
         found_bad_entry = False
-        with open(self.filename, "rb") as f:
+        with self._open_log("rb") as f:
             for raw_line in f:
                 if not raw_line.endswith(b"\n"):
                     found_bad_entry = True
@@ -190,7 +202,7 @@ class WriteAheadLog:
                 "Truncating write-ahead log %s to its last known-good entry",
                 self.filename,
             )
-            with open(self.filename, "r+b") as f:
+            with self._open_log("r+b") as f:
                 f.truncate(good_offset)
 
         self._offset = good_offset
@@ -228,5 +240,5 @@ class WriteAheadLog:
             return
         actual_size = os.path.getsize(self.filename)
         if actual_size > self._offset:
-            with open(self.filename, "r+b") as f:
+            with self._open_log("r+b") as f:
                 f.truncate(self._offset)
