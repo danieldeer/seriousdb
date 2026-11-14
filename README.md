@@ -2,6 +2,16 @@
 
 # seriousdb - A seriously simple database
 
+> [!WARNING]
+> **This repository is archived and no longer maintained.**
+>
+> The project became stale and inactive. On top of that, I kept receiving AI-generated pull
+> requests. I do not have the resources, nor the willingness, to deal with low-quality AI
+> contributions. Therefore I have archived this repository.
+>
+> The code remains available as-is under the [MIT License](LICENSE). Issues and pull requests
+> are no longer accepted, but you are welcome to fork the project.
+
 <div align="center">
 
 [![Tests](https://github.com/danieldeer/seriousdb/actions/workflows/tests.yml/badge.svg)](https://github.com/danieldeer/seriousdb/actions/workflows/tests.yml)
