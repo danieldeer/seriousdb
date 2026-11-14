@@ -150,9 +150,10 @@ class Cache:
         """
         with self.lock:
             db = self._require_db()
+            entry = DeleteEntry(key=key)
             val = db.get(key, None)
             if val is not None:
-                self._record_write(DeleteEntry(key=key))
+                self._record_write(entry)
                 db.pop(key, None)
                 self._safe_maybe_compact()
         if val is None:

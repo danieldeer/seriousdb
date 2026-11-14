@@ -723,3 +723,8 @@ def test_cache_get_bulk_materializes_generator_outside_lock(cache):
     result = cache.get_bulk(key_gen())
     assert result == {"k1": "v1"}
     assert yielded_while_unlocked == [True, True]
+
+
+def test_delete_rejects_non_string_key(cache):
+    with pytest.raises(TypeError):
+        cache.delete(123)
